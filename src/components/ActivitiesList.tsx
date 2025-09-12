@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { activitiesService, type FSMActivity } from '../services'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui'
+import { Card, CardContent, CardHeader, CardTitle } from './ui'
 import { Button } from './ui/Button'
-import { Calendar, Clock, MapPin, User, AlertCircle, CheckCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink } from 'lucide-react'
+import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink } from 'lucide-react'
 
 interface ActivitiesListProps {
   bearerToken: string
@@ -234,7 +234,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                 </tr>
               </thead>
               <tbody>
-                {activitiesList.map((activity, index) => {
+                        {activitiesList.map((activity) => {
                   const activityId = activity.id || `activity-${activities.indexOf(activity)}`
                   const isSelected = hasSelection && selectionState.has(activityId)
                   
