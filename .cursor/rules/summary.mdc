@@ -1,0 +1,58 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+FSMappoint
+
+Environment:
+- We use React
+- We use Javascript & JSX
+- In future we want to deploy it in AWS (amplify?)
+- FSM Customers should be able to install the Extension by themselfes
+- we also need a license management so we can maintain validFrom and ValidTo dates per Tenant that has installed this extension, to prevent them opening the extension if there is no valid license anymore.
+
+Goal:
+- Develop an SAP FSM Extension (Webapplication)
+- The extension is used to send informations about Activities to a ServiceCall to a BusinessPartner contact with a link to a appointment bookings site
+	+ This generates a instance where the fsm user aswell as the customer which recieved the link
+	+ on this instance, there are informations about the servicecall, activity and potential start & enddates
+	+ the customer can then select one of the appointment dateTime and approve it or request another date & time
+	+ if the customer approves a valid appointment, the activity gets automatically planned and release to the planning board
+	+ if the customer provided a new request with a new date and time, the fsm users can see this in the overview list and can either confirm or reject it
+- In the FSM Web App the Extension is also available for the users in FSM
+	+ in there they see all pending appointment instances with status (valid until, approved, request, rejected)
+	+ they also see a list of all other unplanned activities which currently not have any appointment request open and can trigger it for on or multiple of them
+
+Links for appconfig.json:
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_extensions/appconfig.html?locale=en-US&q=extension
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_extensions/field-shellnavigation.html?locale=en-US&q=extension
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_extensions/field-parameters.html?locale=en-US&q=extension
+
+UI Guidelines from SAP:
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_extensions/ui-guidelines.html?locale=en-US&q=extension
+- https://github.com/SAP/fundamental-react
+
+ShellSDK Links from SAP:
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_extensions/modal-application-events.html?locale=en-US&q=extension
+- https://sap.github.io/fsm-shell/#/events?id=modalopen
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_extensions/outlet-position-settings.html?locale=en-US&q=extension
+
+Data API Doc. Links from SAP:
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/data-api-introduction.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/search.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/search-fields.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/search-values.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/expanding-queries.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/pagination.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/sorting.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/response-shaping.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/data-api-retrieve-individual-resource.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/retrieving-object-lists.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/retrieve-deleted-ids-of-resource.html?locale=en-US
+	+ https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_data_api/creating-objects.html?locale=en-US
+
+Appointment api:
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_ab_api/request.html?locale=en-US
+- https://help.sap.com/docs/SAP_FIELD_SERVICE_MANAGEMENT/fsm_ab_api/response.html?locale=en-US
+
