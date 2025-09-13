@@ -1,23 +1,14 @@
 {
-  "name": "UDO Manager",
+  "name": "FSM Appointment Manager",
   "version": "0.1.0",
   "useShellSDK": true,
-  "description": "View & maintain UDO meta/values",
+  "description": "Manage field service appointment requests and customer bookings efficiently",
   "icon": "https://d3do02kvz5vver.cloudfront.net/vite.svg",
   "outlets": [
-    { "application": "shell", "position": "fullScreen", "href": "/" }
-  ],
-  "routes": [
-    {
-      "path": "/",
-      "title": "Dashboard"
-    },
-    {
-      "path": "/instances", 
-      "title": "Appointment Instances"
-    },
-    {
-      "path": "/booking/:token",
-      "title": "Customer Booking"
+    { 
+      "application": "shell", 
+      "position": "fullScreen", 
+      "href": "/" 
     }
-  ]}
+  ]
+}
