@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { activitiesService, appointmentServiceCloud, type FSMActivity } from '../services'
+import { activitiesService, awsAppointmentService, type FSMActivity } from '../services'
 import { Card, CardContent, CardHeader, CardTitle } from './ui'
 import { Button } from './ui/Button'
 import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink } from 'lucide-react'
@@ -50,7 +50,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   useEffect(() => {
     const loadAppointmentInstances = async () => {
       try {
-        const instances = await appointmentServiceCloud.getAllInstancesForTenant()
+        const instances = await awsAppointmentService.getAllInstancesForTenant()
         setAppointmentInstances(instances)
         
         // Update appointment requests set based on existing instances
@@ -100,7 +100,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
       console.log('Generating appointment requests for:', selectedActivitiesData)
       
       // Create appointment instances using the cloud-ready service
-      const result = await appointmentServiceCloud.createAppointmentInstances({
+      const result = await awsAppointmentService.createAppointmentInstances({
         activityIds: selectedActivitiesData.map(activity => activity.id || `activity-${activities.indexOf(activity)}`),
         activities: selectedActivitiesData.map(activity => ({
           id: activity.id || `activity-${activities.indexOf(activity)}`,

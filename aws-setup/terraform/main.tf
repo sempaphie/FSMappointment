@@ -50,8 +50,9 @@ resource "aws_dynamodb_table" "appointment_instances" {
 
   # Global Secondary Index for token-based lookups
   global_secondary_index {
-    name     = "TokenIndex"
-    hash_key = "customerAccessToken"
+    name            = "TokenIndex"
+    hash_key        = "customerAccessToken"
+    projection_type = "ALL"
   }
 
   # TTL for automatic cleanup
