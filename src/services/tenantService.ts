@@ -4,7 +4,7 @@
  */
 
 import { shellSdkService, type FSMContext } from './shellSdkService'
-import { dynamoDBTenantService, type TenantData as DynamoDBTenantData } from './dynamoDBTenantService'
+import { dynamoDBTenantService } from './dynamoDBTenantService'
 
 export interface TenantData {
   // From ShellSDK

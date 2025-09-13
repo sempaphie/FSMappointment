@@ -133,7 +133,7 @@ class DynamoDBTenantServiceImpl {
         message: 'Tenant is valid'
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error validating tenant:', error)
       return {
         isValid: false,
@@ -196,8 +196,8 @@ class DynamoDBTenantServiceImpl {
       console.log('Tenant created successfully in DynamoDB:', tenantData)
       return tenantData
 
-    } catch (error) {
-      if (error.name === 'ConditionalCheckFailedException') {
+    } catch (error: any) {
+      if (error?.name === 'ConditionalCheckFailedException') {
         throw new Error('Tenant already exists')
       }
       console.error('Error creating tenant:', error)
@@ -236,7 +236,7 @@ class DynamoDBTenantServiceImpl {
       }
 
       return Attributes as TenantData
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating tenant license:', error)
       throw new Error('Failed to update tenant license')
     }
@@ -263,7 +263,7 @@ class DynamoDBTenantServiceImpl {
       }
 
       return Item as TenantData
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting current tenant:', error)
       return null
     }
@@ -286,7 +286,7 @@ class DynamoDBTenantServiceImpl {
       const { Items } = await this.client.send(command)
 
       return (Items || []) as TenantData[]
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting tenants by account:', error)
       return []
     }
@@ -323,7 +323,7 @@ class DynamoDBTenantServiceImpl {
       }
 
       return Attributes as TenantData
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating tenant status:', error)
       throw new Error('Failed to update tenant status')
     }
