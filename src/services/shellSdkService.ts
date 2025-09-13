@@ -15,6 +15,35 @@ export interface FSMContext {
   }
   tenant: string
   baseUrl: string
+  
+  // Additional ShellSDK fields
+  selectedLocale?: string
+  account?: string
+  company?: string
+  user?: string
+  userId?: string
+  userEmail?: string
+}
+
+export interface FSMObjectPermissions {
+  objectName: string
+  permission: {
+    CREATE: boolean
+    READ: boolean
+    UPDATE: boolean
+    DELETE: boolean
+  }
+  UI_PERMISSIONS: number[]
+}
+
+export interface FSMCompanySetting {
+  key: string
+  value: any
+}
+
+export interface FSMUserSetting {
+  key: string
+  value: any
 }
 
 export interface ShellSDKService {
@@ -24,6 +53,12 @@ export interface ShellSDKService {
   showNotification(message: string, type?: 'success' | 'error' | 'warning' | 'info'): void
   openModal(url: string, options?: any): Promise<any>
   navigateToFSM(path: string): void
+  
+  // Enhanced ShellSDK methods
+  getPermissions(objectName: string): Promise<FSMObjectPermissions | null>
+  getCompanySetting(key: string): Promise<FSMCompanySetting | null>
+  getUserSetting(key: string): Promise<FSMUserSetting | null>
+  getCurrentLocale(): string | null
 }
 
 class ShellSDKServiceImpl implements ShellSDKService {
@@ -149,7 +184,15 @@ class ShellSDKServiceImpl implements ShellSDKService {
         email: fsmContext.userEmail || null
       },
       tenant: fsmContext.tenant || fsmContext.selectedLocale || 'default',
-      baseUrl: fsmContext.baseUrl || window.location.origin
+      baseUrl: fsmContext.baseUrl || window.location.origin,
+      
+      // Additional ShellSDK fields
+      selectedLocale: fsmContext.selectedLocale,
+      account: fsmContext.account,
+      company: fsmContext.company,
+      user: fsmContext.user,
+      userId: fsmContext.userId,
+      userEmail: fsmContext.userEmail
     }
   }
 
@@ -313,6 +356,111 @@ class ShellSDKServiceImpl implements ShellSDKService {
       // Fallback to window navigation
       window.location.href = path
     }
+  }
+
+  /**
+   * Get permissions for a specific object (ACTIVITY, SERVICECALL, etc.)
+   */
+  async getPermissions(objectName: string): Promise<FSMObjectPermissions | null> {
+    if (!this.shellSDK || !(window as any).FSMShell) {
+      console.warn('ShellSDK not available for permissions check')
+      return null
+    }
+
+    try {
+      const { SHELL_EVENTS } = (window as any).FSMShell
+      
+      return new Promise((resolve) => {
+        // Emit permissions request
+        this.shellSDK.emit(SHELL_EVENTS.Version3.GET_PERMISSIONS, {
+          objectName: objectName
+        })
+        
+        // Listen for response
+        this.shellSDK.on(SHELL_EVENTS.Version3.GET_PERMISSIONS, (response: any) => {
+          resolve(response)
+        })
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          resolve(null)
+        }, 5000)
+      })
+    } catch (error) {
+      console.error('Error getting permissions:', error)
+      return null
+    }
+  }
+
+  /**
+   * Get company-specific setting
+   */
+  async getCompanySetting(key: string): Promise<FSMCompanySetting | null> {
+    if (!this.shellSDK || !(window as any).FSMShell) {
+      console.warn('ShellSDK not available for company settings')
+      return null
+    }
+
+    try {
+      const { SHELL_EVENTS } = (window as any).FSMShell
+      
+      return new Promise((resolve) => {
+        // Emit settings request
+        this.shellSDK.emit(SHELL_EVENTS.Version1.GET_SETTINGS, key)
+        
+        // Listen for response
+        this.shellSDK.on(SHELL_EVENTS.Version1.GET_SETTINGS, (response: any) => {
+          resolve(response)
+        })
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          resolve(null)
+        }, 5000)
+      })
+    } catch (error) {
+      console.error('Error getting company setting:', error)
+      return null
+    }
+  }
+
+  /**
+   * Get user-specific setting
+   */
+  async getUserSetting(key: string): Promise<FSMUserSetting | null> {
+    if (!this.shellSDK || !(window as any).FSMShell) {
+      console.warn('ShellSDK not available for user settings')
+      return null
+    }
+
+    try {
+      const { SHELL_EVENTS } = (window as any).FSMShell
+      
+      return new Promise((resolve) => {
+        // Emit storage item request
+        this.shellSDK.emit(SHELL_EVENTS.Version1.GET_STORAGE_ITEM, key)
+        
+        // Listen for response
+        this.shellSDK.on(SHELL_EVENTS.Version1.GET_STORAGE_ITEM, (response: any) => {
+          resolve(response)
+        })
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          resolve(null)
+        }, 5000)
+      })
+    } catch (error) {
+      console.error('Error getting user setting:', error)
+      return null
+    }
+  }
+
+  /**
+   * Get current user locale
+   */
+  getCurrentLocale(): string | null {
+    return this.context?.selectedLocale || null
   }
 }
 
