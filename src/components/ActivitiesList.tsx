@@ -156,22 +156,6 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     }
   }
 
-  const getStatusBadge = (status?: string) => {
-    if (!status) return <span className="sap-badge sap-badge-status">Unknown</span>
-    
-    switch (status.toUpperCase()) {
-      case 'OPEN':
-        return <span className="sap-badge" style={{ background: '#e3f2fd', color: '#1976d2', borderColor: '#bbdefb' }}>Ready to Plan</span>
-      case 'DRAFT':
-        return <span className="sap-badge" style={{ background: '#fff3e0', color: '#f57c00', borderColor: '#ffcc02' }}>Draft</span>
-      case 'CLOSED':
-        return <span className="sap-badge" style={{ background: '#e8f5e8', color: '#2e7d32', borderColor: '#c8e6c9' }}>Closed</span>
-      case 'IN_PROGRESS':
-        return <span className="sap-badge" style={{ background: '#f3e5f5', color: '#7b1fa2', borderColor: '#e1bee7' }}>In Progress</span>
-      default:
-        return <span className="sap-badge sap-badge-status">{status}</span>
-    }
-  }
 
   const getPriorityBadge = (priority?: string) => {
     if (!priority) return <span className="sap-badge sap-badge-priority-medium">Medium</span>
@@ -188,20 +172,6 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     }
   }
 
-  const getTypeBadge = (type?: string) => {
-    if (!type) return <span className="sap-badge sap-badge-type-maintenance">Maintenance</span>
-    
-    switch (type.toUpperCase()) {
-      case 'ASSIGNMENT':
-        return <span className="sap-badge" style={{ background: '#e1f5fe', color: '#0277bd', borderColor: '#b3e5fc' }}>Assignment</span>
-      case 'REPAIR':
-        return <span className="sap-badge" style={{ background: '#fff3e0', color: '#ef6c00', borderColor: '#ffcc02' }}>Reparatur</span>
-      case 'MAINTENANCE':
-        return <span className="sap-badge sap-badge-type-maintenance">Maintenance</span>
-      default:
-        return <span className="sap-badge sap-badge-type-maintenance">{type}</span>
-    }
-  }
 
   const getServiceCallCode = (activity: FSMActivity) => {
     return activity.object?.objectId?.slice(-7) || activity.id?.slice(-7) || 'N/A'
