@@ -4,7 +4,9 @@ frontend:
     preBuild:
       commands:
         - echo "Installing dependencies..."
-        - npm install
+        - nvm install 18
+        - nvm use 18
+        - npm install --legacy-peer-deps
     build:
       commands:
         - echo "Building the app..."

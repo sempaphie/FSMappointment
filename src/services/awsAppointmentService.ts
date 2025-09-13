@@ -5,8 +5,7 @@ import type {
   GetAppointmentInstanceResponse,
   UpdateCustomerBookingRequest,
   UpdateCustomerBookingResponse,
-  TimeSlot,
-  FSMUserResponse
+  TimeSlot
 } from '../types/appointment'
 
 // AWS API Configuration
@@ -44,7 +43,8 @@ const generateAvailableTimeSlots = (): TimeSlot[] => {
         id: `slot_${day}_${hour}`,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
-        available: true
+        isAvailable: true,
+        isSelected: false
       })
     }
   }
@@ -55,7 +55,6 @@ const generateAvailableTimeSlots = (): TimeSlot[] => {
 // AWS API calls
 const makeApiCall = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
   const url = `${AWS_API_BASE_URL}${endpoint}`
-  const tenantId = getTenantId()
   
   const response = await fetch(url, {
     ...options,
@@ -89,8 +88,7 @@ export const awsAppointmentService = {
 
       return {
         success: true,
-        instances: response.data.instances,
-        totalCreated: response.data.totalCreated
+        instances: response.data.instances
       }
     } catch (error) {
       console.error('Error creating appointment instances:', error)
@@ -157,8 +155,7 @@ export const awsAppointmentService = {
       }
 
       return {
-        success: true,
-        message: response.data.message
+        success: true
       }
     } catch (error) {
       console.error('Error updating customer booking:', error)
