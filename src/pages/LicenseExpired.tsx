@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { tenantService, type TenantData } from '../services/tenantService'
-import { shellSdkService } from '../services/shellSdkService'
+import { type TenantData } from '../services/tenantService'
 import './LicenseExpired.css'
 
 interface LicenseExpiredProps {
