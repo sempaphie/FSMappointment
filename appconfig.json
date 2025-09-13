@@ -31,5 +31,9 @@
   "runtime": {
     "environment": "production",
     "sandbox": false
+  },
+  "shell": {
+    "clientIdentifier": "fsm-appointment-manager",
+    "version": "1.0.0"
   }
 }

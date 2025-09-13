@@ -42,25 +42,14 @@ class ShellSDKServiceImpl implements ShellSDKService {
     try {
       // Check if we're running inside FSM
       if (this.isRunningInFSM()) {
-        // First try to get ShellSDK from the initialization script
-        this.shellSDK = (window as any).ShellSDK || (window as any).FSMExtension
+        // Wait for FSM ShellSDK to be ready
+        const fsmContext = await this.waitForFSMShellSDK()
         
-        if (!this.shellSDK) {
-          // Load ShellSDK dynamically if not available
-          this.shellSDK = await this.loadShellSDK()
-        }
-        
-        if (this.shellSDK) {
-          // Initialize ShellSDK if it has an initialize method
-          if (typeof this.shellSDK.initialize === 'function') {
-            await this.shellSDK.initialize()
-          }
-          
-          // Get FSM context
-          this.context = await this.getFSMContext()
+        if (fsmContext) {
+          this.context = fsmContext
           this.initialized = true
           
-          console.log('ShellSDK initialized successfully', this.context)
+          console.log('FSM ShellSDK initialized successfully', this.context)
           return this.context
         }
       }
@@ -70,6 +59,97 @@ class ShellSDKServiceImpl implements ShellSDKService {
     } catch (error) {
       console.error('Failed to initialize ShellSDK:', error)
       return null
+    }
+  }
+
+  /**
+   * Wait for FSM ShellSDK to be ready and return context
+   */
+  private async waitForFSMShellSDK(): Promise<FSMContext | null> {
+    return new Promise((resolve) => {
+      // Check if ShellSDK is already available
+      if ((window as any).ShellSDK && (window as any).FSMContext) {
+        const context = this.parseFSMContext((window as any).FSMContext)
+        resolve(context)
+        return
+      }
+
+      // Listen for ShellSDK ready event
+      const handleReady = (event: CustomEvent) => {
+        console.log('FSM ShellSDK ready event received:', event.detail)
+        
+        this.shellSDK = event.detail.shellSDK
+        
+        if (event.detail.context) {
+          const context = this.parseFSMContext(event.detail.context)
+          resolve(context)
+        } else {
+          resolve(null)
+        }
+        
+        window.removeEventListener('fsm-shell-sdk-ready', handleReady as EventListener)
+        window.removeEventListener('fsm-shell-sdk-error', handleError as EventListener)
+        window.removeEventListener('fsm-shell-sdk-not-found', handleNotFound as EventListener)
+      }
+
+      const handleError = (event: CustomEvent) => {
+        console.error('FSM ShellSDK error:', event.detail)
+        resolve(null)
+        
+        window.removeEventListener('fsm-shell-sdk-ready', handleReady as EventListener)
+        window.removeEventListener('fsm-shell-sdk-error', handleError as EventListener)
+        window.removeEventListener('fsm-shell-sdk-not-found', handleNotFound as EventListener)
+      }
+
+      const handleNotFound = () => {
+        console.log('FSM ShellSDK not found, using fallback')
+        
+        // Try to use FSMExtension fallback
+        if ((window as any).FSMExtension) {
+          const fallbackContext = this.getFallbackContext()
+          resolve(fallbackContext)
+        } else {
+          resolve(null)
+        }
+        
+        window.removeEventListener('fsm-shell-sdk-ready', handleReady as EventListener)
+        window.removeEventListener('fsm-shell-sdk-error', handleError as EventListener)
+        window.removeEventListener('fsm-shell-sdk-not-found', handleNotFound as EventListener)
+      }
+
+      // Set up event listeners
+      window.addEventListener('fsm-shell-sdk-ready', handleReady as EventListener)
+      window.addEventListener('fsm-shell-sdk-error', handleError as EventListener)
+      window.addEventListener('fsm-shell-sdk-not-found', handleNotFound as EventListener)
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        console.log('FSM ShellSDK initialization timeout')
+        resolve(null)
+        
+        window.removeEventListener('fsm-shell-sdk-ready', handleReady as EventListener)
+        window.removeEventListener('fsm-shell-sdk-error', handleError as EventListener)
+        window.removeEventListener('fsm-shell-sdk-not-found', handleNotFound as EventListener)
+      }, 10000)
+    })
+  }
+
+  /**
+   * Parse FSM context from ShellSDK response
+   */
+  private parseFSMContext(fsmContext: any): FSMContext {
+    return {
+      accountId: fsmContext.accountId || fsmContext.account || 'unknown',
+      companyId: fsmContext.companyId || fsmContext.company || 'unknown',
+      accountName: fsmContext.accountName || fsmContext.account || 'Unknown Account',
+      companyName: fsmContext.companyName || fsmContext.company || 'Unknown Company',
+      currentUser: {
+        id: fsmContext.userId || fsmContext.user || 'unknown',
+        name: fsmContext.userName || fsmContext.user || 'Unknown User',
+        email: fsmContext.userEmail || null
+      },
+      tenant: fsmContext.tenant || fsmContext.selectedLocale || 'default',
+      baseUrl: fsmContext.baseUrl || window.location.origin
     }
   }
 
@@ -89,100 +169,6 @@ class ShellSDKServiceImpl implements ShellSDKService {
     )
   }
 
-  /**
-   * Dynamically load the ShellSDK
-   */
-  private async loadShellSDK(): Promise<any> {
-    try {
-      // Try to load ShellSDK from various possible locations
-      const possiblePaths = [
-        '/sdk/shell-sdk.js',
-        '/shell-sdk.js',
-        '/fsm-shell-sdk.js',
-        './shell-sdk.js'
-      ]
-
-      for (const path of possiblePaths) {
-        try {
-          const script = document.createElement('script')
-          script.src = path
-          script.async = false
-          
-          await new Promise((resolve, reject) => {
-            script.onload = resolve
-            script.onerror = reject
-            document.head.appendChild(script)
-          })
-
-          // Check if ShellSDK is now available
-          if ((window as any).ShellSDK) {
-            return (window as any).ShellSDK
-          }
-        } catch (error) {
-          console.log(`Failed to load ShellSDK from ${path}:`, error)
-          continue
-        }
-      }
-
-      // If not found, try to access from window object
-      return (window as any).ShellSDK || null
-    } catch (error) {
-      console.error('Error loading ShellSDK:', error)
-      return null
-    }
-  }
-
-  /**
-   * Get FSM context information
-   */
-  private async getFSMContext(): Promise<FSMContext> {
-    if (!this.shellSDK) {
-      throw new Error('ShellSDK not initialized')
-    }
-
-    try {
-      let context: any = {}
-
-      // Try to get context from ShellSDK
-      if (typeof this.shellSDK.getContext === 'function') {
-        context = await this.shellSDK.getContext()
-      } else if (typeof this.shellSDK.getTenantContext === 'function') {
-        // Use FSMExtension utilities
-        context = await this.shellSDK.getTenantContext()
-      }
-
-      // Get current user information
-      let currentUser: any = {}
-      if (context.currentUser) {
-        currentUser = context.currentUser
-      } else if (typeof this.shellSDK.getCurrentUser === 'function') {
-        currentUser = await this.shellSDK.getCurrentUser()
-      }
-
-      // Extract tenant information
-      const tenant = context.tenant || this.extractTenantFromUrl()
-      const baseUrl = context.baseUrl || this.extractBaseUrlFromUrl()
-
-      return {
-        accountId: context.accountId || this.extractAccountId(),
-        companyId: context.companyId || this.extractCompanyId(),
-        accountName: context.accountName || 'Unknown Account',
-        companyName: context.companyName || 'Unknown Company',
-        currentUser: {
-          id: currentUser.id || 'unknown',
-          name: currentUser.name || 'Unknown User',
-          email: currentUser.email
-        },
-        tenant,
-        baseUrl
-      }
-    } catch (error) {
-      console.error('Error getting FSM context:', error)
-      
-      // Fallback to extracting from URL or environment
-      return this.getFallbackContext()
-    }
-  }
 
   /**
    * Extract tenant information from URL
@@ -246,8 +232,20 @@ class ShellSDKServiceImpl implements ShellSDKService {
    * Show notification in FSM
    */
   showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
-    if (this.shellSDK && this.shellSDK.showNotification) {
-      this.shellSDK.showNotification(message, type)
+    if (this.shellSDK && (window as any).FSMShell) {
+      try {
+        const { SHELL_EVENTS } = (window as any).FSMShell
+        
+        // Use FSM ShellSDK notification events
+        this.shellSDK.emit(SHELL_EVENTS.Version1.SHOW_NOTIFICATION, {
+          message: message,
+          type: type
+        })
+      } catch (error) {
+        console.error('Error showing notification:', error)
+        // Fallback to console log
+        console.log(`[${type.toUpperCase()}] ${message}`)
+      }
     } else {
       // Fallback to browser notification
       console.log(`[${type.toUpperCase()}] ${message}`)
@@ -259,8 +257,35 @@ class ShellSDKServiceImpl implements ShellSDKService {
    * Open modal in FSM
    */
   async openModal(url: string, options?: any): Promise<any> {
-    if (this.shellSDK && this.shellSDK.openModal) {
-      return await this.shellSDK.openModal(url, options)
+    if (this.shellSDK && (window as any).FSMShell) {
+      try {
+        const { SHELL_EVENTS } = (window as any).FSMShell
+        
+        // Use FSM ShellSDK modal events
+        return new Promise((resolve, reject) => {
+          const modalId = `modal_${Date.now()}`
+          
+          this.shellSDK.emit(SHELL_EVENTS.Version1.OPEN_MODAL, {
+            url: url,
+            modalId: modalId,
+            options: options
+          })
+          
+          // Listen for modal response
+          this.shellSDK.on(`${SHELL_EVENTS.Version1.MODAL_RESPONSE}_${modalId}`, (result: any) => {
+            resolve(result)
+          })
+          
+          // Timeout after 30 seconds
+          setTimeout(() => {
+            reject(new Error('Modal timeout'))
+          }, 30000)
+        })
+      } catch (error) {
+        console.error('Error opening modal:', error)
+        // Fallback to window.open
+        return window.open(url, '_blank', 'width=800,height=600')
+      }
     } else {
       // Fallback to window.open
       return window.open(url, '_blank', 'width=800,height=600')
@@ -271,8 +296,19 @@ class ShellSDKServiceImpl implements ShellSDKService {
    * Navigate to FSM path
    */
   navigateToFSM(path: string): void {
-    if (this.shellSDK && this.shellSDK.navigateTo) {
-      this.shellSDK.navigateTo(path)
+    if (this.shellSDK && (window as any).FSMShell) {
+      try {
+        const { SHELL_EVENTS } = (window as any).FSMShell
+        
+        // Use FSM ShellSDK navigation events
+        this.shellSDK.emit(SHELL_EVENTS.Version1.NAVIGATE, {
+          path: path
+        })
+      } catch (error) {
+        console.error('Error navigating:', error)
+        // Fallback to window navigation
+        window.location.href = path
+      }
     } else {
       // Fallback to window navigation
       window.location.href = path
