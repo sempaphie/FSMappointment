@@ -6,5 +6,24 @@
   "icon": "https://d3do02kvz5vver.cloudfront.net/vite.svg",
   "outlet": "SHELL_HOME_SCREEN",
   "url": "/",
-  "roles": ["SERVICE_MANAGER", "FIELD_SERVICE_TECHNICIAN", "DISPATCHER"]
+  "roles": ["SERVICE_MANAGER", "FIELD_SERVICE_TECHNICIAN", "DISPATCHER"],
+  "provider": "FSM Appointment Solutions",
+  "permissions": {
+    "data": ["READ", "WRITE"],
+    "ui": ["SHELL_HOME_SCREEN"]
+  },
+  "routes": [
+    {
+      "path": "/",
+      "title": "Dashboard"
+    },
+    {
+      "path": "/instances", 
+      "title": "Appointment Instances"
+    },
+    {
+      "path": "/booking/:token",
+      "title": "Customer Booking"
+    }
+  ]
 }
