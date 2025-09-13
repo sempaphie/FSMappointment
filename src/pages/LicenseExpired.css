@@ -1,0 +1,250 @@
+.license-expired {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expired-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 48px;
+  max-width: 700px;
+  width: 100%;
+  margin: 20px;
+  text-align: center;
+}
+
+.expired-header {
+  margin-bottom: 40px;
+}
+
+.expired-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.expired-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.expired-header h1 {
+  color: #333;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+}
+
+.expired-description {
+  color: #666;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.tenant-info {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.tenant-info h2 {
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item label {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item span {
+  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.expired-date {
+  color: #e74c3c !important;
+  font-weight: 600 !important;
+}
+
+.days-expired {
+  color: #e74c3c;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.contact-support-button,
+.refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.contact-support-button {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+}
+
+.contact-support-button:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+}
+
+.refresh-button {
+  background: #f8f9fa;
+  color: #333;
+  border: 2px solid #e0e0e0;
+}
+
+.refresh-button:hover {
+  background: #e9ecef;
+  border-color: #007bff;
+  color: #007bff;
+  transform: translateY(-2px);
+}
+
+.contact-support-button svg,
+.refresh-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.support-info {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+}
+
+.support-info h3 {
+  color: #333;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.support-info p {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+.support-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.support-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.support-item strong {
+  color: #007bff;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .license-expired {
+    padding: 10px;
+  }
+  
+  .expired-container {
+    padding: 32px 24px;
+    margin: 10px;
+  }
+  
+  .expired-header h1 {
+    font-size: 2rem;
+  }
+  
+  .expired-description {
+    font-size: 1.1rem;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .contact-support-button,
+  .refresh-button {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+  
+  .support-contacts {
+    align-items: center;
+  }
+  
+  .support-item {
+    justify-content: center;
+    text-align: center;
+  }
+}

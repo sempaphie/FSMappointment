@@ -15,6 +15,7 @@ export interface FSMContext {
   }
   tenant: string
   baseUrl: string
+  cluster: string
   
   // Additional ShellSDK fields
   selectedLocale?: string
@@ -23,6 +24,7 @@ export interface FSMContext {
   user?: string
   userId?: string
   userEmail?: string
+  cloudHost?: string
 }
 
 export interface FSMObjectPermissions {
@@ -173,6 +175,9 @@ class ShellSDKServiceImpl implements ShellSDKService {
    * Parse FSM context from ShellSDK response
    */
   private parseFSMContext(fsmContext: any): FSMContext {
+    const cloudHost = fsmContext.cloudHost || fsmContext.baseUrl || window.location.hostname
+    const cluster = this.extractClusterFromCloudHost(cloudHost)
+    
     return {
       accountId: fsmContext.accountId || fsmContext.account || 'unknown',
       companyId: fsmContext.companyId || fsmContext.company || 'unknown',
@@ -185,6 +190,7 @@ class ShellSDKServiceImpl implements ShellSDKService {
       },
       tenant: fsmContext.tenant || fsmContext.selectedLocale || 'default',
       baseUrl: fsmContext.baseUrl || window.location.origin,
+      cluster: cluster,
       
       // Additional ShellSDK fields
       selectedLocale: fsmContext.selectedLocale,
@@ -192,7 +198,8 @@ class ShellSDKServiceImpl implements ShellSDKService {
       company: fsmContext.company,
       user: fsmContext.user,
       userId: fsmContext.userId,
-      userEmail: fsmContext.userEmail
+      userEmail: fsmContext.userEmail,
+      cloudHost: cloudHost
     }
   }
 
@@ -231,6 +238,45 @@ class ShellSDKServiceImpl implements ShellSDKService {
   }
 
   /**
+   * Extract cluster from cloud host (e.g., "eu.fsm.cloud.sap" -> "eu")
+   */
+  private extractClusterFromCloudHost(cloudHost: string): string {
+    try {
+      // Handle different formats:
+      // "eu.fsm.cloud.sap" -> "eu"
+      // "https://eu.fsm.cloud.sap" -> "eu"
+      // "us.fsm.cloud.sap" -> "us"
+      
+      let host = cloudHost
+      
+      // Remove protocol if present
+      if (host.startsWith('http://') || host.startsWith('https://')) {
+        host = new URL(host).hostname
+      }
+      
+      // Extract cluster from hostname
+      const parts = host.split('.')
+      if (parts.length >= 3 && parts[1] === 'fsm' && parts[2] === 'cloud') {
+        return parts[0] // First part is the cluster
+      }
+      
+      // Fallback: try to extract from any FSM-related domain
+      if (host.includes('fsm.cloud.sap')) {
+        const match = host.match(/^([^.]+)\.fsm\.cloud\.sap/)
+        if (match) {
+          return match[1]
+        }
+      }
+      
+      // Default fallback
+      return 'eu'
+    } catch (error) {
+      console.warn('Failed to extract cluster from cloudHost:', cloudHost, error)
+      return 'eu'
+    }
+  }
+
+  /**
    * Extract account ID from URL parameters or environment
    */
   private extractAccountId(): string {
@@ -250,6 +296,9 @@ class ShellSDKServiceImpl implements ShellSDKService {
    * Get fallback context when ShellSDK is not available
    */
   private getFallbackContext(): FSMContext {
+    const baseUrl = this.extractBaseUrlFromUrl()
+    const cluster = this.extractClusterFromCloudHost(baseUrl)
+    
     return {
       accountId: this.extractAccountId(),
       companyId: this.extractCompanyId(),
@@ -260,7 +309,8 @@ class ShellSDKServiceImpl implements ShellSDKService {
         name: 'Unknown User'
       },
       tenant: this.extractTenantFromUrl(),
-      baseUrl: this.extractBaseUrlFromUrl()
+      baseUrl: baseUrl,
+      cluster: cluster
     }
   }
 

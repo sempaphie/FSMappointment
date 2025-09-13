@@ -14,3 +14,9 @@ export {
   type FSMCompanySetting,
   type FSMUserSetting
 } from './shellSdkService'
+export { 
+  tenantService,
+  type TenantData,
+  type TenantSetupFormData,
+  type TenantValidationResult
+} from './tenantService'
