@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { activitiesService, awsAppointmentService, type FSMActivity } from '../services'
-import { Card, CardContent, CardHeader, CardTitle } from './ui'
-import { Button } from './ui/Button'
 import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink } from 'lucide-react'
 import type { AppointmentInstance } from '../types'
 
@@ -158,49 +156,49 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   }
 
   const getStatusBadge = (status?: string) => {
-    if (!status) return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Unknown</span>
+    if (!status) return <span className="sap-badge sap-badge-status">Unknown</span>
     
     switch (status.toUpperCase()) {
       case 'OPEN':
-        return <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Open</span>
+        return <span className="sap-badge" style={{ background: '#e3f2fd', color: '#1976d2', borderColor: '#bbdefb' }}>Ready to Plan</span>
       case 'DRAFT':
-        return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Draft</span>
+        return <span className="sap-badge" style={{ background: '#fff3e0', color: '#f57c00', borderColor: '#ffcc02' }}>Draft</span>
       case 'CLOSED':
-        return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Closed</span>
+        return <span className="sap-badge" style={{ background: '#e8f5e8', color: '#2e7d32', borderColor: '#c8e6c9' }}>Closed</span>
       case 'IN_PROGRESS':
-        return <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">In Progress</span>
+        return <span className="sap-badge" style={{ background: '#f3e5f5', color: '#7b1fa2', borderColor: '#e1bee7' }}>In Progress</span>
       default:
-        return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">{status}</span>
+        return <span className="sap-badge sap-badge-status">{status}</span>
     }
   }
 
   const getPriorityBadge = (priority?: string) => {
-    if (!priority) return <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full border border-orange-200">Medium</span>
+    if (!priority) return <span className="sap-badge sap-badge-priority-medium">Medium</span>
     
     switch (priority.toUpperCase()) {
       case 'HIGH':
-        return <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full border border-red-200">High</span>
+        return <span className="sap-badge" style={{ background: '#ffebee', color: '#c62828', borderColor: '#ffcdd2' }}>High</span>
       case 'MEDIUM':
-        return <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full border border-orange-200">Medium</span>
+        return <span className="sap-badge sap-badge-priority-medium">Medium</span>
       case 'LOW':
-        return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full border border-green-200">Low</span>
+        return <span className="sap-badge" style={{ background: '#e8f5e8', color: '#2e7d32', borderColor: '#c8e6c9' }}>Low</span>
       default:
-        return <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full border border-orange-200">{priority}</span>
+        return <span className="sap-badge sap-badge-priority-medium">{priority}</span>
     }
   }
 
   const getTypeBadge = (type?: string) => {
-    if (!type) return <span className="px-2 py-1 text-xs font-medium bg-pink-100 text-pink-800 rounded-full border border-pink-200">Assignment</span>
+    if (!type) return <span className="sap-badge sap-badge-type-maintenance">Maintenance</span>
     
     switch (type.toUpperCase()) {
       case 'ASSIGNMENT':
-        return <span className="px-2 py-1 text-xs font-medium bg-pink-100 text-pink-800 rounded-full border border-pink-200">Assignment</span>
+        return <span className="sap-badge" style={{ background: '#e1f5fe', color: '#0277bd', borderColor: '#b3e5fc' }}>Assignment</span>
       case 'REPAIR':
-        return <span className="px-2 py-1 text-xs font-medium bg-pink-100 text-pink-800 rounded-full border border-pink-200">Reparatur</span>
+        return <span className="sap-badge" style={{ background: '#fff3e0', color: '#ef6c00', borderColor: '#ffcc02' }}>Reparatur</span>
       case 'MAINTENANCE':
-        return <span className="px-2 py-1 text-xs font-medium bg-pink-100 text-pink-800 rounded-full border border-pink-200">Maintenance</span>
+        return <span className="sap-badge sap-badge-type-maintenance">Maintenance</span>
       default:
-        return <span className="px-2 py-1 text-xs font-medium bg-pink-100 text-pink-800 rounded-full border border-pink-200">{type}</span>
+        return <span className="sap-badge sap-badge-type-maintenance">{type}</span>
     }
   }
 
@@ -237,95 +235,96 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
 
     return (
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-md font-semibold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--sap-text-color)' }}>{title}</h3>
           {activitiesList.length > 0 && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm" style={{ color: 'var(--sap-text-color-secondary)' }}>
               {activitiesList.length} {activitiesList.length === 1 ? 'activity' : 'activities'}
             </span>
           )}
         </div>
         
         {activitiesList.length > 0 ? (
-          <div className="overflow-x-auto border border-gray-200 rounded-lg">
+          <div className="overflow-x-auto sap-table">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
+                <tr>
                   {showOpenButton && (
-                    <th className="text-left py-3 px-4 w-20">
+                    <th className="w-20">
                       {/* Open Instance column */}
                     </th>
                   )}
                   {hasSelection && (
-                    <th className="text-left py-3 px-4 w-12">
+                    <th className="w-12">
                       <input 
                         type="checkbox" 
-                        className="rounded border-gray-300" 
+                        className="rounded" 
                         checked={selectionState.size === activitiesList.length && activitiesList.length > 0}
                         onChange={(e) => onSelectAll(e.target.checked)}
                       />
                     </th>
                   )}
-                  <th className="text-left py-3 px-4 w-12">
+                  <th className="w-12">
                     {/* Info column */}
                   </th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Service Call Code</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Service Call Subject</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Service Call Status</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Priority</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Type</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Activity Code</th>
+                  <th>Service Call Code</th>
+                  <th>Service Call Subject</th>
+                  <th>Service Call Status</th>
+                  <th>Priority</th>
+                  <th>Type</th>
+                  <th>Activity Code</th>
                 </tr>
               </thead>
               <tbody>
-                        {activitiesList.map((activity) => {
+                {activitiesList.map((activity) => {
                   const activityId = activity.id || `activity-${activities.indexOf(activity)}`
                   const isSelected = hasSelection && selectionState.has(activityId)
                   
                   return (
-                    <tr key={activityId} className={`border-b border-gray-100 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
+                    <tr key={activityId} className={isSelected ? 'selected' : ''}>
                       {showOpenButton && (
-                        <td className="py-3 px-4">
-                          <Button
+                        <td>
+                          <button
                             onClick={() => handleOpenInstance(activity)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs"
+                            className="sap-button"
+                            style={{ padding: '4px 8px', fontSize: '12px' }}
                           >
                             <ExternalLink className="w-3 h-3 mr-1" />
                             Open
-                          </Button>
+                          </button>
                         </td>
                       )}
                       {hasSelection && (
-                        <td className="py-3 px-4">
+                        <td>
                           <input 
                             type="checkbox" 
-                            className="rounded border-gray-300" 
+                            className="rounded" 
                             checked={isSelected}
                             onChange={(e) => onSelectionChange(activityId, e.target.checked)}
                           />
                         </td>
                       )}
-                      <td className="py-3 px-4">
-                        <Info className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600" />
+                      <td>
+                        <Info className="sap-icon" />
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="text-blue-600 underline cursor-pointer">
+                      <td>
+                        <span className="sap-link">
                           {getServiceCallCode(activity)}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-gray-900">
+                      <td style={{ color: 'var(--sap-text-color)' }}>
                         {getServiceCallSubject(activity)}
                       </td>
-                      <td className="py-3 px-4">
+                      <td>
                         {getStatusBadge(activity.status)}
                       </td>
-                      <td className="py-3 px-4">
+                      <td>
                         {getPriorityBadge(activity.priority)}
                       </td>
-                      <td className="py-3 px-4">
+                      <td>
                         {getTypeBadge(activity.type)}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td style={{ color: 'var(--sap-text-color-secondary)' }}>
                         {activity.code || 'N/A'}
                       </td>
                     </tr>
@@ -335,7 +334,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
             </table>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg">
+          <div className="text-center py-8" style={{ color: 'var(--sap-text-color-secondary)', border: '1px solid var(--sap-border-color)', borderRadius: '8px' }}>
             No activities found
           </div>
         )}
@@ -347,14 +346,14 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     <div className="space-y-6">
       {/* Appointment Requests Table */}
       {activitiesWithAppointmentRequests.length > 0 && (
-        <Card className="w-full">
-          <CardHeader className="pb-2">
+        <div className="sap-card">
+          <div className="sap-card-header">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-gray-900">Appointment Requests</CardTitle>
-              <Settings className="w-4 h-4 text-blue-600 cursor-pointer hover:text-blue-800" />
+              <h2 className="sap-card-title">Appointment Requests</h2>
+              <Settings className="sap-icon" style={{ color: 'var(--sap-color-primary)' }} />
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
+          </div>
+          <div className="sap-card-content">
             {renderActivitiesTable(
               "Activities with Appointment Requests",
               activitiesWithAppointmentRequests,
@@ -364,33 +363,33 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
               undefined,
               true // showOpenButton
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Main Activities Table */}
-      <Card className="w-full">
-        <CardHeader className="pb-2">
+      <div className="sap-card">
+        <div className="sap-card-header">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-gray-900">Available Activities</CardTitle>
-            <Settings className="w-4 h-4 text-blue-600 cursor-pointer hover:text-blue-800" />
+            <h2 className="sap-card-title">Available Activities</h2>
+            <Settings className="sap-icon" style={{ color: 'var(--sap-color-primary)' }} />
           </div>
-        </CardHeader>
+        </div>
       
-        <CardContent className="p-0">
+        <div className="sap-card-content">
           {/* Appointment Request Button */}
           {activitiesWithoutAppointmentRequests.length > 0 && (
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="p-4 border-b" style={{ borderColor: 'var(--sap-border-color-light)', background: '#f8f9fa' }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm" style={{ color: 'var(--sap-text-color-secondary)' }}>
                     {selectedActivities.size} of {activitiesWithoutAppointmentRequests.length} activities selected
                   </span>
                 </div>
-                <Button
+                <button
                   onClick={handleGenerateAppointmentRequests}
                   disabled={selectedActivities.size === 0 || appointmentLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="sap-button"
                 >
                   {appointmentLoading ? (
                     <>
@@ -403,7 +402,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                       Generate Appointment Requests
                     </>
                   )}
-                </Button>
+                </button>
               </div>
             </div>
           )}
@@ -418,32 +417,32 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
           )}
 
           {activities.length === 0 && !loading && !error && (
-            <div className="text-center py-8 text-gray-600 p-4">
+            <div className="text-center py-8 p-4" style={{ color: 'var(--sap-text-color-secondary)' }}>
               No activities found.
             </div>
           )}
 
           {loading && (
-            <div className="text-center py-8 text-gray-600 p-4">
+            <div className="text-center py-8 p-4" style={{ color: 'var(--sap-text-color-secondary)' }}>
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
               Loading activities...
             </div>
           )}
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-md m-4">
-              <div className="flex items-center gap-2 text-red-800">
+            <div className="p-4 m-4" style={{ background: '#ffebee', border: '1px solid #ffcdd2', borderRadius: '8px' }}>
+              <div className="flex items-center gap-2" style={{ color: '#c62828' }}>
                 <AlertCircle className="w-4 h-4" />
                 <p className="font-medium">Error: {error}</p>
               </div>
             </div>
           )}
 
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
-            <Button
+          <div className="p-4 border-t" style={{ borderColor: 'var(--sap-border-color-light)', background: '#f8f9fa' }}>
+            <button
               onClick={handleGetActivities}
               disabled={loading}
-              className="w-full"
+              className="sap-button w-full"
             >
               {loading ? (
                 <>
@@ -456,10 +455,10 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                   Refresh Activities
                 </>
               )}
-            </Button>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

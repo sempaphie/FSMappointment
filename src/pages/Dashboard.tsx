@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui'
 import { ActivitiesList } from '../components/ActivitiesList'
 import { authService } from '../services'
 
@@ -32,27 +31,27 @@ export const Dashboard: React.FC = () => {
       {bearerToken ? (
         <ActivitiesList bearerToken={bearerToken} />
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>FSM Activities</CardTitle>
-            <CardDescription>
+        <div className="sap-card">
+          <div className="sap-card-header">
+            <h2 className="sap-card-title">FSM Activities</h2>
+            <p className="text-sm" style={{ color: 'var(--sap-text-color-secondary)', marginTop: '4px' }}>
               {tokenLoading 
                 ? 'Connecting to SAP FSM...' 
                 : 'Failed to connect to SAP FSM'
               }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="sap-card-content">
             <div className="text-center py-8">
-              <p className="text-gray-600">
+              <p style={{ color: 'var(--sap-text-color-secondary)' }}>
                 {tokenLoading 
                   ? 'Please wait while we authenticate with SAP FSM...'
                   : 'Unable to connect. Please check your configuration.'
                 }
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   )

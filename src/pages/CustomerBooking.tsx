@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom'
 import { awsAppointmentService } from '../services'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui'
 import { Button } from '../components/ui/Button'
-import { AlertCircle, Loader2, CheckCircle, Calendar, Clock, User, MessageSquare } from 'lucide-react'
-import type { AppointmentInstance, TimeSlot, UpdateCustomerBookingRequest } from '../types'
+import { AlertCircle, Loader2, CheckCircle, Calendar, User, MessageSquare } from 'lucide-react'
+import type { AppointmentInstance, UpdateCustomerBookingRequest } from '../types'
 
 export const CustomerBooking: React.FC = () => {
   const { token } = useParams<{ token: string }>()
@@ -23,8 +23,6 @@ export const CustomerBooking: React.FC = () => {
     specialRequirements: ''
   })
   
-  const [selectedTimeSlots, setSelectedTimeSlots] = useState<TimeSlot[]>([])
-  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([])
 
   // Load appointment instance
   useEffect(() => {
@@ -41,10 +39,6 @@ export const CustomerBooking: React.FC = () => {
         if (result.success && result.instance) {
           setAppointmentInstance(result.instance)
           
-          // Generate available time slots
-          const timeSlots = awsAppointmentService.generateAvailableTimeSlots()
-          setAvailableTimeSlots(timeSlots)
-          
           // Pre-fill form if customer already submitted
           if (result.instance.customerBooking) {
             const booking = result.instance.customerBooking
@@ -55,7 +49,6 @@ export const CustomerBooking: React.FC = () => {
               customerMessage: booking.customerMessage || '',
               specialRequirements: booking.specialRequirements || ''
             })
-            setSelectedTimeSlots(booking.preferredTimeSlots)
             
             if (booking.status === 'submitted' || booking.status === 'approved') {
               setSubmitted(true)
@@ -75,16 +68,6 @@ export const CustomerBooking: React.FC = () => {
     loadAppointmentInstance()
   }, [token])
 
-  const handleTimeSlotToggle = (slot: TimeSlot) => {
-    setSelectedTimeSlots(prev => {
-      const isSelected = prev.some(s => s.id === slot.id)
-      if (isSelected) {
-        return prev.filter(s => s.id !== slot.id)
-      } else {
-        return [...prev, { ...slot, isSelected: true }]
-      }
-    })
-  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -103,10 +86,7 @@ export const CustomerBooking: React.FC = () => {
       return
     }
     
-    if (selectedTimeSlots.length === 0) {
-      alert('Please select at least one preferred time slot')
-      return
-    }
+    // Time slot selection is no longer required
 
     setSubmitting(true)
     try {
@@ -114,7 +94,6 @@ export const CustomerBooking: React.FC = () => {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone || undefined,
-        selectedTimeSlots: selectedTimeSlots,
         customerMessage: formData.customerMessage || undefined,
         specialRequirements: formData.specialRequirements || undefined
       }
@@ -135,21 +114,6 @@ export const CustomerBooking: React.FC = () => {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
 
   if (loading) {
     return (
@@ -196,7 +160,7 @@ export const CustomerBooking: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Schedule Your Appointment</h1>
-          <p className="text-gray-600">Please fill out the form below to request your preferred appointment time</p>
+          <p className="text-gray-600">Please fill out the form below to request your appointment</p>
         </div>
 
         {/* Service Details */}
@@ -239,7 +203,8 @@ export const CustomerBooking: React.FC = () => {
                 <p><strong>Name:</strong> {formData.customerName}</p>
                 <p><strong>Email:</strong> {formData.customerEmail}</p>
                 {formData.customerPhone && <p><strong>Phone:</strong> {formData.customerPhone}</p>}
-                <p><strong>Preferred Times:</strong> {selectedTimeSlots.length} time slot(s) selected</p>
+                {formData.customerMessage && <p><strong>Message:</strong> {formData.customerMessage}</p>}
+                {formData.specialRequirements && <p><strong>Special Requirements:</strong> {formData.specialRequirements}</p>}
               </div>
             </CardContent>
           </Card>
@@ -297,40 +262,6 @@ export const CustomerBooking: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Time Slot Selection */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-600" />
-                  Preferred Appointment Times
-                </CardTitle>
-                <p className="text-sm text-gray-600">Select one or more preferred time slots</p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {availableTimeSlots.map((slot) => {
-                    const isSelected = selectedTimeSlots.some(s => s.id === slot.id)
-                    return (
-                      <button
-                        key={slot.id}
-                        type="button"
-                        onClick={() => handleTimeSlotToggle(slot)}
-                        className={`p-3 text-left border rounded-lg transition-colors ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50 text-blue-900'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        <div className="font-medium">{formatDate(slot.startTime)}</div>
-                        <div className="text-sm text-gray-600">
-                          {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Additional Information */}
             <Card className="mb-6">
@@ -374,7 +305,7 @@ export const CustomerBooking: React.FC = () => {
             <div className="text-center">
               <Button
                 type="submit"
-                disabled={submitting || selectedTimeSlots.length === 0}
+                disabled={submitting}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
               >
                 {submitting ? (

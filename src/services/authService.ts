@@ -32,6 +32,21 @@ const getAuthConfig = (): AuthConfig => ({
 
 export const authService = {
   async getBearerToken(): Promise<{ success: boolean; token?: string; error?: string; details?: any }> {
+    // Mock mode for UI development - set to true to bypass SAP FSM authentication
+    const MOCK_MODE = true
+    
+    if (MOCK_MODE) {
+      console.log('Running in MOCK mode - bypassing SAP FSM authentication')
+      return {
+        success: true,
+        token: 'mock-bearer-token-for-ui-development',
+        details: {
+          mockMode: true,
+          message: 'Using mock token for UI development'
+        }
+      }
+    }
+    
     try {
       const config = getAuthConfig()
       

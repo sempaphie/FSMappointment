@@ -1,3 +1,185 @@
+/* Import SAP Fundamental Styles */
+@import 'fundamental-styles/dist/fundamental-styles.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* SAP Fiori Design System Base Styles */
+html {
+  font-size: 16px;
+  font-family: "72", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* SAP FSM Color Palette */
+:root {
+  --sap-color-brand: #0070f3;
+  --sap-color-primary: #0070f3;
+  --sap-color-secondary: #6c757d;
+  --sap-color-success: #28a745;
+  --sap-color-warning: #ffc107;
+  --sap-color-error: #dc3545;
+  --sap-color-info: #17a2b8;
+  --sap-color-neutral: #6c757d;
+  
+  /* SAP FSM Background Colors */
+  --sap-background-color: #ffffff;
+  --sap-background-color-hover: #f8f9fa;
+  --sap-background-color-selected: #e3f2fd;
+  
+  /* SAP FSM Text Colors */
+  --sap-text-color: #212529;
+  --sap-text-color-secondary: #6c757d;
+  --sap-text-color-muted: #adb5bd;
+  
+  /* SAP FSM Border Colors */
+  --sap-border-color: #dee2e6;
+  --sap-border-color-light: #f1f3f4;
+}
+
+/* SAP FSM Table Styles */
+.sap-table {
+  background: var(--sap-background-color);
+  border: 1px solid var(--sap-border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sap-table thead {
+  background: #f8f9fa;
+}
+
+.sap-table thead th {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--sap-text-color);
+  border-bottom: 1px solid var(--sap-border-color);
+  font-size: 14px;
+}
+
+.sap-table tbody tr {
+  border-bottom: 1px solid var(--sap-border-color-light);
+}
+
+.sap-table tbody tr:hover {
+  background: var(--sap-background-color-hover);
+}
+
+.sap-table tbody tr.selected {
+  background: var(--sap-background-color-selected);
+}
+
+.sap-table tbody td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--sap-text-color);
+}
+
+/* SAP FSM Button Styles */
+.sap-button {
+  background: var(--sap-color-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sap-button:hover {
+  background: #0056b3;
+}
+
+.sap-button:disabled {
+  background: var(--sap-color-neutral);
+  cursor: not-allowed;
+}
+
+.sap-button-secondary {
+  background: transparent;
+  color: var(--sap-color-primary);
+  border: 1px solid var(--sap-color-primary);
+}
+
+.sap-button-secondary:hover {
+  background: var(--sap-background-color-selected);
+}
+
+/* SAP FSM Badge Styles */
+.sap-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.sap-badge-status {
+  background: #e3f2fd;
+  color: #1976d2;
+  border-color: #bbdefb;
+}
+
+.sap-badge-priority-medium {
+  background: #fff3e0;
+  color: #f57c00;
+  border-color: #ffcc02;
+}
+
+.sap-badge-type-maintenance {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border-color: #c8e6c9;
+}
+
+/* SAP FSM Link Styles */
+.sap-link {
+  color: var(--sap-color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sap-link:hover {
+  color: #0056b3;
+}
+
+/* SAP FSM Icon Styles */
+.sap-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--sap-text-color-secondary);
+  cursor: pointer;
+}
+
+.sap-icon:hover {
+  color: var(--sap-text-color);
+}
+
+/* SAP FSM Card Styles */
+.sap-card {
+  background: var(--sap-background-color);
+  border: 1px solid var(--sap-border-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sap-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--sap-border-color-light);
+  background: #f8f9fa;
+}
+
+.sap-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sap-text-color);
+  margin: 0;
+}
+
+.sap-card-content {
+  padding: 20px;
+}
