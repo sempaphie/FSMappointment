@@ -1,0 +1,35 @@
+{
+  "app": {
+    "id": "fsm-appointment-manager",
+    "title": "FSM Appointment Manager",
+    "description": "Manage field service appointment requests and customer bookings",
+    "version": "1.0.0",
+    "vendor": "Your Company",
+    "type": "web",
+    "technology": "react"
+  },
+  "ui": {
+    "outlets": [
+      {
+        "id": "shell-home-screen",
+        "type": "SHELL_HOME_SCREEN",
+        "title": "Appointment Manager",
+        "description": "Manage your field service appointments efficiently",
+        "icon": "calendar",
+        "url": "./index.html",
+        "width": "100%",
+        "height": "100%"
+      }
+    ]
+  },
+  "permissions": [
+    "SHELL_READ",
+    "SHELL_WRITE",
+    "DATA_API_READ",
+    "DATA_API_WRITE"
+  ],
+  "runtime": {
+    "environment": "production",
+    "sandbox": false
+  }
+}

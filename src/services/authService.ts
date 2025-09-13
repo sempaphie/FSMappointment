@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { AxiosResponse } from 'axios'
+import { shellSdkService, type FSMContext } from './shellSdkService'
 
 interface TokenResponse {
   access_token: string
@@ -19,10 +20,10 @@ interface AuthConfig {
   testUser: string
 }
 
-const getAuthConfig = (): AuthConfig => ({
+const getAuthConfig = (fsmContext?: FSMContext | null): AuthConfig => ({
   tokenUrl: import.meta.env.VITE_FSM_TOKEN_URL || 'https://eu.coresuite.com/api',
-  accountId: import.meta.env.VITE_SAP_ACCOUNT_ID || '86810',
-  companyId: import.meta.env.VITE_SAP_COMPANY_ID || '111214',
+  accountId: fsmContext?.accountId || import.meta.env.VITE_SAP_ACCOUNT_ID || '86810',
+  companyId: fsmContext?.companyId || import.meta.env.VITE_SAP_COMPANY_ID || '111214',
   clientId: import.meta.env.VITE_SAP_CLIENT_ID || '0001531a-fsmtable',
   clientSecret: import.meta.env.VITE_SAP_CLIENT_SECRET || '4b657b69-837c-4b00-a903-7f89161703b4',
   clientIdName: import.meta.env.VITE_SAP_CLIENT_ID_NAME || 'FSMfieldplan',
@@ -32,8 +33,12 @@ const getAuthConfig = (): AuthConfig => ({
 
 export const authService = {
   async getBearerToken(): Promise<{ success: boolean; token?: string; error?: string; details?: any }> {
+    // Check if we have FSM context available
+    const fsmContext = shellSdkService.getContext()
+    
     // Mock mode for UI development - set to true to bypass SAP FSM authentication
-    const MOCK_MODE = true
+    // Disable mock mode when running in FSM
+    const MOCK_MODE = !fsmContext
     
     if (MOCK_MODE) {
       console.log('Running in MOCK mode - bypassing SAP FSM authentication')
@@ -48,7 +53,7 @@ export const authService = {
     }
     
     try {
-      const config = getAuthConfig()
+      const config = getAuthConfig(fsmContext)
       
       // Validate required environment variables
       const requiredFields = ['accountId', 'companyId', 'clientId', 'clientSecret']
