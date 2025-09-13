@@ -26,7 +26,7 @@ const getAuthConfig = async (fsmContext?: FSMContext | null): Promise<AuthConfig
   let tenant: TenantData | null = null
   if (fsmContext) {
     try {
-      const tenantResult = await tenantService.validateTenant(fsmContext)
+      const tenantResult = await tenantService.validateTenant()
       if (tenantResult.isValid && tenantResult.tenant) {
         tenant = tenantResult.tenant
       }

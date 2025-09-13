@@ -1,7 +1,6 @@
 import axios from 'axios'
 import type { AxiosInstance } from 'axios'
 import { API_CONFIG, FSM_HEADERS } from '../constants'
-import type { FSMContext } from './shellSdkService'
 
 // Create axios instance with configuration
 const createApiClient = (baseURL?: string, headers?: Record<string, string>): AxiosInstance => {
@@ -41,7 +40,7 @@ const createApiClient = (baseURL?: string, headers?: Record<string, string>): Ax
 }
 
 // Export a function to get API client with configuration
-export const getApiClient = (fsmContext?: FSMContext | null, apiConfig?: { baseURL: string; headers: Record<string, string> }): AxiosInstance => {
+export const getApiClient = (apiConfig?: { baseURL: string; headers: Record<string, string> }): AxiosInstance => {
   if (apiConfig) {
     return createApiClient(apiConfig.baseURL, apiConfig.headers)
   }

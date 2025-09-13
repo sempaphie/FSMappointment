@@ -1,8 +1,8 @@
 import axios from 'axios'
 import type { AxiosResponse } from 'axios'
-import { API_CONFIG, FSM_HEADERS, getApiConfig } from '../constants'
+import { API_CONFIG, getApiConfig } from '../constants'
 import { tenantService, type TenantData } from './tenantService'
-import { shellSdkService, type FSMContext } from './shellSdkService'
+import { shellSdkService } from './shellSdkService'
 
 export interface FSMActivity {
   id: string
@@ -194,7 +194,7 @@ export const activitiesService = {
     
     if (fsmContext) {
       try {
-        const tenantResult = await tenantService.validateTenant(fsmContext)
+        const tenantResult = await tenantService.validateTenant()
         if (tenantResult.isValid && tenantResult.tenant) {
           tenant = tenantResult.tenant
         }

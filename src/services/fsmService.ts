@@ -1,8 +1,8 @@
-import { apiClient, getApiClient } from './api'
+import { getApiClient } from './api'
 import type { FSMAppointment, FSMResponse } from '../types'
 import { getApiConfig } from '../constants'
 import { tenantService, type TenantData } from './tenantService'
-import { shellSdkService, type FSMContext } from './shellSdkService'
+import { shellSdkService } from './shellSdkService'
 
 // Helper function to get tenant-specific API client
 const getTenantApiClient = async () => {
@@ -11,7 +11,7 @@ const getTenantApiClient = async () => {
   
   if (fsmContext) {
     try {
-      const tenantResult = await tenantService.validateTenant(fsmContext)
+      const tenantResult = await tenantService.validateTenant()
       if (tenantResult.isValid && tenantResult.tenant) {
         tenant = tenantResult.tenant
       }
@@ -24,7 +24,7 @@ const getTenantApiClient = async () => {
   const apiConfig = getApiConfig(tenant)
   
   // Create API client with tenant-specific configuration
-  return getApiClient(fsmContext, apiConfig)
+  return getApiClient(apiConfig)
 }
 
 // FSM API Methods
