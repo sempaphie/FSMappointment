@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { awsAppointmentService } from '../services'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui'
-import { Button } from '../components/ui/Button'
 import { AlertCircle, Loader2, CheckCircle, Calendar, User, MessageSquare } from 'lucide-react'
 import type { AppointmentInstance, UpdateCustomerBookingRequest } from '../types'
 
@@ -117,10 +115,16 @@ export const CustomerBooking: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading appointment details...</p>
+      <div className="min-h-screen" style={{ background: 'var(--sap-background-color)' }}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="sap-card" style={{ maxWidth: '400px' }}>
+            <div className="sap-card-content">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: 'var(--sap-color-primary)' }} />
+                <p style={{ color: 'var(--sap-text-color-secondary)' }}>Loading appointment details...</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -128,100 +132,110 @@ export const CustomerBooking: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md mx-4">
-          <CardContent className="p-6 text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-            <p className="text-gray-600">{error}</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen" style={{ background: 'var(--sap-background-color)' }}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="sap-card" style={{ maxWidth: '400px' }}>
+            <div className="sap-card-content">
+              <div className="text-center">
+                <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--sap-color-error)' }} />
+                <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--sap-text-color)' }}>Error</h2>
+                <p style={{ color: 'var(--sap-text-color-secondary)' }}>{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!appointmentInstance) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md mx-4">
-          <CardContent className="p-6 text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Not Found</h2>
-            <p className="text-gray-600">Appointment instance not found</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen" style={{ background: 'var(--sap-background-color)' }}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="sap-card" style={{ maxWidth: '400px' }}>
+            <div className="sap-card-content">
+              <div className="text-center">
+                <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--sap-color-error)' }} />
+                <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--sap-text-color)' }}>Not Found</h2>
+                <p style={{ color: 'var(--sap-text-color-secondary)' }}>Appointment instance not found</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen py-8" style={{ background: 'var(--sap-background-color)' }}>
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Schedule Your Appointment</h1>
-          <p className="text-gray-600">Please fill out the form below to request your appointment</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--sap-text-color)' }}>Schedule Your Appointment</h1>
+          <p style={{ color: 'var(--sap-text-color-secondary)' }}>Please fill out the form below to request your appointment</p>
         </div>
 
         {/* Service Details */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-blue-600" />
+        <div className="sap-card mb-6">
+          <div className="sap-card-header">
+            <h2 className="sap-card-title flex items-center gap-2">
+              <Calendar className="w-5 h-5" style={{ color: 'var(--sap-color-primary)' }} />
               Service Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h2>
+          </div>
+          <div className="sap-card-content">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Activity Code</p>
-                <p className="font-semibold">{appointmentInstance.fsmActivity.activityCode}</p>
+                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Activity Code</p>
+                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>{appointmentInstance.fsmActivity.activityCode}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Service Call ID</p>
-                <p className="font-semibold">{appointmentInstance.fsmActivity.serviceCallId}</p>
+                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Service Call ID</p>
+                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>{appointmentInstance.fsmActivity.serviceCallId}</p>
               </div>
               <div className="md:col-span-2">
-                <p className="text-sm text-gray-500">Service Description</p>
-                <p className="font-semibold">{appointmentInstance.fsmActivity.subject}</p>
+                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Service Description</p>
+                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>{appointmentInstance.fsmActivity.subject}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Booking Form */}
         {submitted ? (
-          <Card className="text-center">
-            <CardContent className="p-8">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Request Submitted!</h2>
-              <p className="text-gray-600 mb-4">
+          <div className="sap-card text-center">
+            <div className="sap-card-content" style={{ padding: '2rem' }}>
+              <CheckCircle className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--sap-color-success)' }} />
+              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--sap-text-color)' }}>Request Submitted!</h2>
+              <p className="mb-4" style={{ color: 'var(--sap-text-color-secondary)' }}>
                 Thank you for your appointment request. We will review your preferences and contact you soon to confirm the details.
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-                <h3 className="font-semibold text-blue-900 mb-2">Your Request Summary:</h3>
-                <p><strong>Name:</strong> {formData.customerName}</p>
-                <p><strong>Email:</strong> {formData.customerEmail}</p>
-                {formData.customerPhone && <p><strong>Phone:</strong> {formData.customerPhone}</p>}
-                {formData.customerMessage && <p><strong>Message:</strong> {formData.customerMessage}</p>}
-                {formData.specialRequirements && <p><strong>Special Requirements:</strong> {formData.specialRequirements}</p>}
+              <div className="sap-card" style={{ background: '#e3f2fd', borderColor: '#bbdefb', textAlign: 'left' }}>
+                <div className="sap-card-content">
+                  <h3 className="font-semibold mb-2" style={{ color: 'var(--sap-color-primary)' }}>Your Request Summary:</h3>
+                  <p style={{ color: 'var(--sap-text-color)' }}><strong>Name:</strong> {formData.customerName}</p>
+                  <p style={{ color: 'var(--sap-text-color)' }}><strong>Email:</strong> {formData.customerEmail}</p>
+                  {formData.customerPhone && <p style={{ color: 'var(--sap-text-color)' }}><strong>Phone:</strong> {formData.customerPhone}</p>}
+                  {formData.customerMessage && <p style={{ color: 'var(--sap-text-color)' }}><strong>Message:</strong> {formData.customerMessage}</p>}
+                  {formData.specialRequirements && <p style={{ color: 'var(--sap-text-color)' }}><strong>Special Requirements:</strong> {formData.specialRequirements}</p>}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ) : (
           <form onSubmit={handleSubmit}>
             {/* Customer Information */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-600" />
+            <div className="sap-card mb-6">
+              <div className="sap-card-header">
+                <h2 className="sap-card-title flex items-center gap-2">
+                  <User className="w-5 h-5" style={{ color: 'var(--sap-color-primary)' }} />
                   Your Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h2>
+              </div>
+              <div className="sap-card-content">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--sap-text-color)' }}>
                       Full Name *
                     </label>
                     <input
@@ -229,12 +243,15 @@ export const CustomerBooking: React.FC = () => {
                       required
                       value={formData.customerName}
                       onChange={(e) => handleInputChange('customerName', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+                      style={{ 
+                        borderColor: 'var(--sap-border-color)'
+                      }}
                       placeholder="Enter your full name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--sap-text-color)' }}>
                       Email Address *
                     </label>
                     <input
@@ -242,71 +259,84 @@ export const CustomerBooking: React.FC = () => {
                       required
                       value={formData.customerEmail}
                       onChange={(e) => handleInputChange('customerEmail', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+                      style={{ 
+                        borderColor: 'var(--sap-border-color)'
+                      }}
                       placeholder="Enter your email"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--sap-text-color)' }}>
                       Phone Number (Optional)
                     </label>
                     <input
                       type="tel"
                       value={formData.customerPhone}
                       onChange={(e) => handleInputChange('customerPhone', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+                      style={{ 
+                        borderColor: 'var(--sap-border-color)'
+                      }}
                       placeholder="Enter your phone number"
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
 
             {/* Additional Information */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-blue-600" />
+            <div className="sap-card mb-6">
+              <div className="sap-card-header">
+                <h2 className="sap-card-title flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" style={{ color: 'var(--sap-color-primary)' }} />
                   Additional Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h2>
+              </div>
+              <div className="sap-card-content">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--sap-text-color)' }}>
                       Message (Optional)
                     </label>
                     <textarea
                       value={formData.customerMessage}
                       onChange={(e) => handleInputChange('customerMessage', e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+                      style={{ 
+                        borderColor: 'var(--sap-border-color)'
+                      }}
                       placeholder="Any additional information or questions..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--sap-text-color)' }}>
                       Special Requirements (Optional)
                     </label>
                     <textarea
                       value={formData.specialRequirements}
                       onChange={(e) => handleInputChange('specialRequirements', e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+                      style={{ 
+                        borderColor: 'var(--sap-border-color)'
+                      }}
                       placeholder="Any special requirements or accessibility needs..."
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Submit Button */}
             <div className="text-center">
-              <Button
+              <button
                 type="submit"
                 disabled={submitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
+                className="sap-button"
+                style={{ padding: '12px 32px', fontSize: '16px' }}
               >
                 {submitting ? (
                   <>
@@ -316,7 +346,7 @@ export const CustomerBooking: React.FC = () => {
                 ) : (
                   'Submit Appointment Request'
                 )}
-              </Button>
+              </button>
             </div>
           </form>
         )}
