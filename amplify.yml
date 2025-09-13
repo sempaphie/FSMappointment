@@ -6,11 +6,16 @@ frontend:
         - echo "Installing dependencies..."
         - nvm install 18
         - nvm use 18
-        - npm install --legacy-peer-deps
+        - echo "Node version: $(node --version)"
+        - echo "NPM version: $(npm --version)"
+        - echo "Installing dependencies with legacy peer deps..."
+        - npm install --legacy-peer-deps --verbose
+        - echo "Dependencies installed successfully"
     build:
       commands:
         - echo "Building the app..."
         - npm run build
+        - echo "Build completed successfully"
   artifacts:
     baseDirectory: dist
     files:

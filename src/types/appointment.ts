@@ -126,7 +126,6 @@ export interface UpdateCustomerBookingRequest {
   customerName: string
   customerEmail: string
   customerPhone?: string
-  selectedTimeSlots: TimeSlot[]
   customerMessage?: string
   specialRequirements?: string
 }

@@ -239,7 +239,7 @@ export const cloudAppointmentService = {
         customerName: bookingData.customerName,
         customerEmail: bookingData.customerEmail,
         customerPhone: bookingData.customerPhone,
-        preferredTimeSlots: bookingData.selectedTimeSlots,
+        preferredTimeSlots: [], // No time slots selected since we removed that feature
         customerMessage: bookingData.customerMessage,
         specialRequirements: bookingData.specialRequirements,
         status: 'submitted' as const,
