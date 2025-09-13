@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { activitiesService, awsAppointmentService, type FSMActivity } from '../services'
 import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink } from 'lucide-react'
 import type { AppointmentInstance } from '../types'
+import { format } from 'date-fns'
 
 interface ActivitiesListProps {
   bearerToken: string
@@ -210,6 +211,26 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     return activity.subject || 'No Subject'
   }
 
+  // Helper functions for date formatting
+  const formatDateTime = (dateTimeString?: string) => {
+    if (!dateTimeString) return 'N/A'
+    try {
+      return format(new Date(dateTimeString), 'dd.MM.yyyy HH:mm')
+    } catch (error) {
+      return 'Invalid Date'
+    }
+  }
+
+  const getStartDateTime = (activity: FSMActivity) => {
+    // If activity.earliestStartDateTime is not null then this else serviceCall.startDateTime
+    return activity.earliestStartDateTime || activity.serviceCall?.startDateTime || activity.startDateTime
+  }
+
+  const getEndDateTime = (activity: FSMActivity) => {
+    // If activity.latestStartDateTime is not null then this else serviceCall.endDateTime
+    return activity.latestStartDateTime || activity.serviceCall?.endDateTime || activity.endDateTime
+  }
+
   // Filter activities based on appointment request status
   const activitiesWithAppointmentRequests = activities.filter(activity => {
     const activityId = activity.id || `activity-${activities.indexOf(activity)}`
@@ -269,10 +290,9 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                   </th>
                   <th>Service Call Code</th>
                   <th>Service Call Subject</th>
-                  <th>Service Call Status</th>
                   <th>Priority</th>
-                  <th>Type</th>
-                  <th>Activity Code</th>
+                  <th>Start</th>
+                  <th>End</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,16 +336,13 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                         {getServiceCallSubject(activity)}
                       </td>
                       <td>
-                        {getStatusBadge(activity.status)}
-                      </td>
-                      <td>
                         {getPriorityBadge(activity.priority)}
                       </td>
-                      <td>
-                        {getTypeBadge(activity.type)}
+                      <td style={{ color: 'var(--sap-text-color-secondary)' }}>
+                        {formatDateTime(getStartDateTime(activity))}
                       </td>
                       <td style={{ color: 'var(--sap-text-color-secondary)' }}>
-                        {activity.code || 'N/A'}
+                        {formatDateTime(getEndDateTime(activity))}
                       </td>
                     </tr>
                   )

@@ -18,7 +18,8 @@ export const CustomerBooking: React.FC = () => {
     customerEmail: '',
     customerPhone: '',
     customerMessage: '',
-    specialRequirements: ''
+    specialRequirements: '',
+    requestedDateTime: ''
   })
   
 
@@ -45,7 +46,8 @@ export const CustomerBooking: React.FC = () => {
               customerEmail: booking.customerEmail,
               customerPhone: booking.customerPhone || '',
               customerMessage: booking.customerMessage || '',
-              specialRequirements: booking.specialRequirements || ''
+              specialRequirements: booking.specialRequirements || '',
+              requestedDateTime: booking.requestedDateTime || ''
             })
             
             if (booking.status === 'submitted' || booking.status === 'approved') {
@@ -93,14 +95,18 @@ export const CustomerBooking: React.FC = () => {
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone || undefined,
         customerMessage: formData.customerMessage || undefined,
-        specialRequirements: formData.specialRequirements || undefined
+        specialRequirements: formData.specialRequirements || undefined,
+        requestedDateTime: formData.requestedDateTime || undefined
       }
 
       const result = await awsAppointmentService.updateCustomerBooking(token, bookingData)
       
       if (result.success) {
         setSubmitted(true)
-        alert('Your appointment request has been submitted successfully! We will contact you soon to confirm the details.')
+        const message = formData.requestedDateTime 
+          ? `Your appointment request for ${new Date(formData.requestedDateTime).toLocaleString()} has been submitted successfully! We will contact you soon to confirm the details.`
+          : 'Your appointment request has been submitted successfully! We will contact you soon to confirm the details.'
+        alert(message)
       } else {
         alert(`Error submitting request: ${result.error}`)
       }
@@ -186,16 +192,22 @@ export const CustomerBooking: React.FC = () => {
           <div className="sap-card-content">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Activity Code</p>
-                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>{appointmentInstance.fsmActivity.activityCode}</p>
+                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Equipment Code</p>
+                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                  {appointmentInstance.fsmActivity.equipment?.code || 'N/A'}
+                </p>
               </div>
               <div>
-                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Service Call ID</p>
-                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>{appointmentInstance.fsmActivity.serviceCallId}</p>
+                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Equipment Name</p>
+                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                  {appointmentInstance.fsmActivity.equipment?.name || 'N/A'}
+                </p>
               </div>
               <div className="md:col-span-2">
-                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Service Description</p>
-                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>{appointmentInstance.fsmActivity.subject}</p>
+                <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Address of the Equipment</p>
+                <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                  {appointmentInstance.fsmActivity.equipment?.address || 'N/A'}
+                </p>
               </div>
             </div>
           </div>
@@ -216,6 +228,7 @@ export const CustomerBooking: React.FC = () => {
                   <p style={{ color: 'var(--sap-text-color)' }}><strong>Name:</strong> {formData.customerName}</p>
                   <p style={{ color: 'var(--sap-text-color)' }}><strong>Email:</strong> {formData.customerEmail}</p>
                   {formData.customerPhone && <p style={{ color: 'var(--sap-text-color)' }}><strong>Phone:</strong> {formData.customerPhone}</p>}
+                  {formData.requestedDateTime && <p style={{ color: 'var(--sap-text-color)' }}><strong>Requested Date:</strong> {new Date(formData.requestedDateTime).toLocaleString()}</p>}
                   {formData.customerMessage && <p style={{ color: 'var(--sap-text-color)' }}><strong>Message:</strong> {formData.customerMessage}</p>}
                   {formData.specialRequirements && <p style={{ color: 'var(--sap-text-color)' }}><strong>Special Requirements:</strong> {formData.specialRequirements}</p>}
                 </div>
@@ -266,7 +279,7 @@ export const CustomerBooking: React.FC = () => {
                       placeholder="Enter your email"
                     />
                   </div>
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-sm font-medium mb-1" style={{ color: 'var(--sap-text-color)' }}>
                       Phone Number (Optional)
                     </label>
@@ -279,6 +292,21 @@ export const CustomerBooking: React.FC = () => {
                         borderColor: 'var(--sap-border-color)'
                       }}
                       placeholder="Enter your phone number"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--sap-text-color)' }}>
+                      Request a Date (Optional)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.requestedDateTime}
+                      onChange={(e) => handleInputChange('requestedDateTime', e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2"
+                      style={{ 
+                        borderColor: 'var(--sap-border-color)'
+                      }}
+                      placeholder="Select your preferred date and time"
                     />
                   </div>
                 </div>

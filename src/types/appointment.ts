@@ -32,6 +32,12 @@ export interface AppointmentInstance {
     }
     serviceCallId?: string
     serviceCallNumber?: string
+    // Equipment information
+    equipment?: {
+      code?: string
+      name?: string
+      address?: string
+    }
   }
   
   // Customer booking (optional - filled when customer submits)
@@ -63,6 +69,9 @@ export interface CustomerBooking {
   customerMessage?: string
   specialRequirements?: string
   
+  // Manual date request
+  requestedDateTime?: string // ISO date string - customer's manual date/time request
+  
   // Status tracking
   status: CustomerBookingStatus
   submittedAt: string // ISO date string
@@ -72,6 +81,7 @@ export interface CustomerBooking {
 export type CustomerBookingStatus =
   | 'draft'          // Customer is still selecting
   | 'submitted'      // Customer has submitted their preferences
+  | 'requested'      // Customer has requested a specific date/time
   | 'under_review'   // FSM user is reviewing
   | 'approved'       // FSM user approved the booking
   | 'rejected'       // FSM user rejected the booking
@@ -128,6 +138,7 @@ export interface UpdateCustomerBookingRequest {
   customerPhone?: string
   customerMessage?: string
   specialRequirements?: string
+  requestedDateTime?: string // ISO date string
 }
 
 export interface UpdateCustomerBookingResponse {

@@ -50,11 +50,16 @@ export interface FSMActivity {
     id: string
     number?: string
     subject?: string
+    startDateTime?: string
+    endDateTime?: string
   }
   technician?: {
     id: string
     name?: string
   }
+  // New fields for appointment scheduling
+  earliestStartDateTime?: string
+  latestStartDateTime?: string
 }
 
 interface ActivityResponseItem {
