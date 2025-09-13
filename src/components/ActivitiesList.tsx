@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { activitiesService, appointmentService, type FSMActivity } from '../services'
+import { activitiesService, amplifyAppointmentService, type FSMActivity } from '../services'
 import { Card, CardContent, CardHeader, CardTitle } from './ui'
 import { Button } from './ui/Button'
 import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink } from 'lucide-react'
@@ -50,7 +50,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   useEffect(() => {
     const loadAppointmentInstances = async () => {
       try {
-        const instances = await appointmentService.getAllInstancesForTenant()
+        const instances = await amplifyAppointmentService.getAllInstancesForTenant()
         setAppointmentInstances(instances)
         
         // Update appointment requests set based on existing instances
@@ -99,8 +99,8 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
 
       console.log('Generating appointment requests for:', selectedActivitiesData)
       
-      // Create appointment instances using the appointment service
-      const result = await appointmentService.createAppointmentInstances({
+      // Create appointment instances using the Amplify service
+      const result = await amplifyAppointmentService.createAppointmentInstances({
         activityIds: selectedActivitiesData.map(activity => activity.id || `activity-${activities.indexOf(activity)}`),
         activities: selectedActivitiesData.map(activity => ({
           id: activity.id || `activity-${activities.indexOf(activity)}`,

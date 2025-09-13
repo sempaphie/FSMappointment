@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { appointmentService } from '../services'
+import { amplifyAppointmentService } from '../services'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui'
 import { Button } from '../components/ui/Button'
 import { AlertCircle, Loader2, CheckCircle, Calendar, Clock, User, MessageSquare } from 'lucide-react'
@@ -36,13 +36,13 @@ export const CustomerBooking: React.FC = () => {
       }
 
       try {
-        const result = await appointmentService.getAppointmentInstanceByToken(token)
+        const result = await amplifyAppointmentService.getAppointmentInstanceByToken(token)
         
         if (result.success && result.instance) {
           setAppointmentInstance(result.instance)
           
           // Generate available time slots
-          const timeSlots = appointmentService.generateAvailableTimeSlots()
+          const timeSlots = amplifyAppointmentService.generateAvailableTimeSlots()
           setAvailableTimeSlots(timeSlots)
           
           // Pre-fill form if customer already submitted
@@ -119,7 +119,7 @@ export const CustomerBooking: React.FC = () => {
         specialRequirements: formData.specialRequirements || undefined
       }
 
-      const result = await appointmentService.updateCustomerBooking(token, bookingData)
+      const result = await amplifyAppointmentService.updateCustomerBooking(token, bookingData)
       
       if (result.success) {
         setSubmitted(true)
