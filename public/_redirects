@@ -1,0 +1,4 @@
+# Amplify redirects for SPA routing
+/booking/* /index.html 200
+/instances /index.html 200
+/* /index.html 404-200
