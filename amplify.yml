@@ -27,12 +27,15 @@ redirects:
   - source: '/booking/<*>'
     status: '200'
     target: '/index.html'
+    condition: ''
   - source: '/instances'
     status: '200'
     target: '/index.html'
+    condition: ''
   - source: '/*'
     status: '404-200'
     target: '/index.html'
+    condition: ''
 customHeaders:
   - pattern: '**/*'
     headers:

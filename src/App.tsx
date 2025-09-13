@@ -18,6 +18,15 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        // Check if we're on a booking page - if so, skip FSM initialization
+        const isBookingPage = window.location.pathname.startsWith('/booking/')
+        
+        if (isBookingPage) {
+          // For booking pages, go directly to ready state
+          setAppState('ready')
+          return
+        }
+
         // Initialize ShellSDK first
         await shellSdkService.initialize()
         
