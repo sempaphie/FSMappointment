@@ -23,3 +23,25 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
+redirects:
+  - source: '/booking/<*>'
+    status: '200'
+    target: '/index.html'
+  - source: '/booking/<*>/'
+    status: '200'
+    target: '/index.html'
+  - source: '/instances'
+    status: '200'
+    target: '/index.html'
+  - source: '/*'
+    status: '404-200'
+    target: '/index.html'
+customHeaders:
+  - pattern: '**/*'
+    headers:
+      - key: 'X-Frame-Options'
+        value: 'SAMEORIGIN'
+      - key: 'X-Content-Type-Options'
+        value: 'nosniff'
+      - key: 'X-XSS-Protection'
+        value: '1; mode=block'
