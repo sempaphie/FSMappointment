@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosResponse } from 'axios'
 import { shellSdkService, type FSMContext } from './shellSdkService'
+import { tenantService, type TenantData } from './tenantService'
 
 interface TokenResponse {
   access_token: string
@@ -20,16 +21,34 @@ interface AuthConfig {
   testUser: string
 }
 
-const getAuthConfig = (fsmContext?: FSMContext | null): AuthConfig => ({
-  tokenUrl: import.meta.env.VITE_FSM_TOKEN_URL || 'https://eu.coresuite.com/api',
-  accountId: fsmContext?.accountId || import.meta.env.VITE_SAP_ACCOUNT_ID || '86810',
-  companyId: fsmContext?.companyId || import.meta.env.VITE_SAP_COMPANY_ID || '111214',
-  clientId: import.meta.env.VITE_SAP_CLIENT_ID || '0001531a-fsmtable',
-  clientSecret: import.meta.env.VITE_SAP_CLIENT_SECRET || '4b657b69-837c-4b00-a903-7f89161703b4',
-  clientIdName: import.meta.env.VITE_SAP_CLIENT_ID_NAME || 'FSMfieldplan',
-  clientIdVersion: import.meta.env.VITE_SAP_CLIENT_ID_VERSION || '0.1',
-  testUser: import.meta.env.VITE_SAP_TEST_USER || 'BC1164511670442EA56C76A00A9199F8',
-})
+const getAuthConfig = async (fsmContext?: FSMContext | null): Promise<AuthConfig> => {
+  // First, try to get tenant data
+  let tenant: TenantData | null = null
+  if (fsmContext) {
+    try {
+      const tenantResult = await tenantService.validateTenant(fsmContext)
+      if (tenantResult.isValid && tenantResult.tenant) {
+        tenant = tenantResult.tenant
+      }
+    } catch (error) {
+      console.warn('Failed to get tenant data, falling back to environment variables:', error)
+    }
+  }
+
+  // Token URL is always 'eu' as per requirements
+  const tokenUrl = 'https://eu.coresuite.com/api'
+  
+  return {
+    tokenUrl,
+    accountId: tenant?.accountId || fsmContext?.accountId || import.meta.env.VITE_SAP_ACCOUNT_ID || '86810',
+    companyId: tenant?.companyId || fsmContext?.companyId || import.meta.env.VITE_SAP_COMPANY_ID || '111214',
+    clientId: tenant?.clientId || import.meta.env.VITE_SAP_CLIENT_ID || '0001531a-fsmtable',
+    clientSecret: tenant?.clientSecret || import.meta.env.VITE_SAP_CLIENT_SECRET || '4b657b69-837c-4b00-a903-7f89161703b4',
+    clientIdName: import.meta.env.VITE_SAP_CLIENT_ID_NAME || 'FSMfieldplan',
+    clientIdVersion: import.meta.env.VITE_SAP_CLIENT_ID_VERSION || '0.1',
+    testUser: import.meta.env.VITE_SAP_TEST_USER || 'BC1164511670442EA56C76A00A9199F8',
+  }
+}
 
 export const authService = {
   async getBearerToken(): Promise<{ success: boolean; token?: string; error?: string; details?: any }> {
@@ -53,7 +72,7 @@ export const authService = {
     }
     
     try {
-      const config = getAuthConfig(fsmContext)
+      const config = await getAuthConfig(fsmContext)
       
       // Validate required environment variables
       const requiredFields = ['accountId', 'companyId', 'clientId', 'clientSecret']

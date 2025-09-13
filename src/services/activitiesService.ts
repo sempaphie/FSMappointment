@@ -1,6 +1,8 @@
 import axios from 'axios'
 import type { AxiosResponse } from 'axios'
-import { API_CONFIG, FSM_HEADERS } from '../constants'
+import { API_CONFIG, FSM_HEADERS, getApiConfig } from '../constants'
+import { tenantService, type TenantData } from './tenantService'
+import { shellSdkService, type FSMContext } from './shellSdkService'
 
 export interface FSMActivity {
   id: string
@@ -186,8 +188,23 @@ const MOCK_ACTIVITIES: FSMActivity[] = [
 
 export const activitiesService = {
   async getActivities(bearerToken: string): Promise<{ success: boolean; activities?: FSMActivity[]; error?: string; details?: any }> {
+    // Get FSM context and tenant data
+    const fsmContext = shellSdkService.getContext()
+    let tenant: TenantData | null = null
+    
+    if (fsmContext) {
+      try {
+        const tenantResult = await tenantService.validateTenant(fsmContext)
+        if (tenantResult.isValid && tenantResult.tenant) {
+          tenant = tenantResult.tenant
+        }
+      } catch (error) {
+        console.warn('Failed to get tenant data for activities API:', error)
+      }
+    }
+
     // Mock mode for UI development - set to true to bypass SAP FSM API calls
-    const MOCK_MODE = true
+    const MOCK_MODE = !fsmContext || !tenant
     
     if (MOCK_MODE) {
       console.log('Running in MOCK mode - using sample activities data')
@@ -203,7 +220,9 @@ export const activitiesService = {
     }
     
     try {
-      const activitiesUrl = `${API_CONFIG.dataAPIURL}/Activity`
+      // Get tenant-specific API configuration
+      const apiConfig = getApiConfig(tenant)
+      const activitiesUrl = `${apiConfig.dataAPIURL}/Activity`
 
       // Query parameters using FSM Data API format
       const params = new URLSearchParams({
@@ -215,7 +234,7 @@ export const activitiesService = {
       console.log('FSM Data API URL:', fullUrl)
       console.log('FSM Headers:', {
         'Authorization': `Bearer ${bearerToken}`,
-        ...FSM_HEADERS,
+        ...apiConfig.headers,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       })
@@ -225,7 +244,7 @@ export const activitiesService = {
         {
           headers: {
             'Authorization': `Bearer ${bearerToken}`,
-            ...FSM_HEADERS,
+            ...apiConfig.headers,
             'Accept': 'application/json',
             'Content-Type': 'application/json',
           },

@@ -5,6 +5,8 @@ export const APP_CONFIG = {
   description: 'Manage your field service appointments efficiently',
 } as const
 
+import type { TenantData } from '../services/tenantService'
+
 // API Configuration
 export const API_CONFIG = {
   timeout: 30000,
@@ -21,6 +23,35 @@ export const FSM_HEADERS = {
   'X-Client-ID': import.meta.env.VITE_SAP_CLIENT_ID || 'SDO',
   'X-Client-Version': import.meta.env.VITE_SAP_CLIENT_ID_VERSION || '1.0',
 } as const
+
+// Function to get API configuration based on tenant data
+export const getApiConfig = (tenant?: TenantData | null) => {
+  if (!tenant) {
+    return {
+      baseURL: API_CONFIG.baseURL,
+      dataAPIURL: API_CONFIG.dataAPIURL,
+      serviceURL: API_CONFIG.serviceURL,
+      headers: FSM_HEADERS
+    }
+  }
+
+  // Build URLs using tenant's cluster
+  const baseURL = `https://${tenant.cluster}.fsm.cloud.sap`
+  const dataAPIURL = `${baseURL}/api/data/v4`
+  const serviceURL = `${baseURL}/api/service-management/v2/activities/`
+
+  return {
+    baseURL,
+    dataAPIURL,
+    serviceURL,
+    headers: {
+      'X-Account-ID': tenant.accountId,
+      'X-Company-ID': tenant.companyId,
+      'X-Client-ID': tenant.clientId,
+      'X-Client-Version': import.meta.env.VITE_SAP_CLIENT_ID_VERSION || '1.0',
+    }
+  }
+}
 
 // Appointment Status
 export const APPOINTMENT_STATUS = {
