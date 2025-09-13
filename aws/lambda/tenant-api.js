@@ -6,7 +6,8 @@
 const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
-const TABLE_NAME = process.env.TENANT_TABLE_NAME || 'fsm-appointment-tenants';
+const TENANT_TABLE_NAME = process.env.TENANT_TABLE_NAME || 'fsm-appointment-tenants';
+const APPOINTMENT_TABLE_NAME = process.env.APPOINTMENT_TABLE_NAME || 'fsm-appointment-instances';
 
 // CORS headers
 const corsHeaders = {
@@ -40,18 +41,24 @@ exports.handler = async (event) => {
                     return await validateTenant(queryStringParameters);
                 } else if (operation === 'tenant') {
                     return await getTenant(pathParameters);
+                } else if (operation === 'appointments') {
+                    return await handleAppointmentGet(pathParts, queryStringParameters);
                 }
                 break;
                 
             case 'POST':
                 if (operation === 'tenant') {
                     return await createTenant(JSON.parse(body || '{}'));
+                } else if (operation === 'appointments') {
+                    return await handleAppointmentPost(JSON.parse(body || '{}'));
                 }
                 break;
                 
             case 'PUT':
                 if (operation === 'tenant') {
                     return await updateTenant(pathParameters, JSON.parse(body || '{}'));
+                } else if (operation === 'appointments') {
+                    return await handleAppointmentPut(pathParts, JSON.parse(body || '{}'));
                 }
                 break;
                 
@@ -416,4 +423,328 @@ function sanitizeTenant(tenant) {
     
     const { clientSecret, ...sanitized } = tenant;
     return sanitized;
+}
+
+// ============================================================================
+// APPOINTMENT HANDLERS
+// ============================================================================
+
+/**
+ * Handle GET requests for appointments
+ */
+async function handleAppointmentGet(pathParts, queryParams) {
+    try {
+        console.log('Handling appointment GET request:', { pathParts, queryParams });
+        
+        // Check if it's a token-based request: /appointments/token/{token}
+        if (pathParts.length >= 3 && pathParts[1] === 'token') {
+            const token = pathParts[2];
+            return await getAppointmentInstanceByToken(token);
+        }
+        
+        // Check if it's a tenant-based request: /appointments?tenantId={id}
+        if (queryParams && queryParams.tenantId) {
+            return await getAllAppointmentInstancesForTenant(queryParams.tenantId);
+        }
+        
+        return {
+            statusCode: 400,
+            headers: corsHeaders,
+            body: JSON.stringify({ error: 'Invalid appointment request' })
+        };
+        
+    } catch (error) {
+        console.error('Error handling appointment GET:', error);
+        return {
+            statusCode: 500,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                error: 'Failed to get appointment',
+                message: error.message
+            })
+        };
+    }
+}
+
+/**
+ * Handle POST requests for appointments
+ */
+async function handleAppointmentPost(requestBody) {
+    try {
+        console.log('Handling appointment POST request:', requestBody);
+        
+        // Create appointment instances
+        return await createAppointmentInstances(requestBody);
+        
+    } catch (error) {
+        console.error('Error handling appointment POST:', error);
+        return {
+            statusCode: 500,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                error: 'Failed to create appointments',
+                message: error.message
+            })
+        };
+    }
+}
+
+/**
+ * Handle PUT requests for appointments
+ */
+async function handleAppointmentPut(pathParts, requestBody) {
+    try {
+        console.log('Handling appointment PUT request:', { pathParts, requestBody });
+        
+        // Check if it's a token-based update: /appointments/token/{token}
+        if (pathParts.length >= 3 && pathParts[1] === 'token') {
+            const token = pathParts[2];
+            return await updateCustomerBooking(token, requestBody);
+        }
+        
+        return {
+            statusCode: 400,
+            headers: corsHeaders,
+            body: JSON.stringify({ error: 'Invalid appointment update request' })
+        };
+        
+    } catch (error) {
+        console.error('Error handling appointment PUT:', error);
+        return {
+            statusCode: 500,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                error: 'Failed to update appointment',
+                message: error.message
+            })
+        };
+    }
+}
+
+/**
+ * Get appointment instance by customer access token
+ */
+async function getAppointmentInstanceByToken(customerAccessToken) {
+    try {
+        console.log('Getting appointment instance by token:', customerAccessToken);
+        
+        const params = {
+            TableName: APPOINTMENT_TABLE_NAME,
+            Key: {
+                customerAccessToken: customerAccessToken
+            }
+        };
+        
+        const result = await dynamodb.get(params).promise();
+        
+        if (!result.Item) {
+            return {
+                statusCode: 404,
+                headers: corsHeaders,
+                body: JSON.stringify({
+                    success: false,
+                    error: 'Appointment instance not found'
+                })
+            };
+        }
+        
+        return {
+            statusCode: 200,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                success: true,
+                data: result.Item
+            })
+        };
+        
+    } catch (error) {
+        console.error('Error getting appointment instance:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get all appointment instances for a tenant
+ */
+async function getAllAppointmentInstancesForTenant(tenantId) {
+    try {
+        console.log('Getting all appointment instances for tenant:', tenantId);
+        
+        const params = {
+            TableName: APPOINTMENT_TABLE_NAME,
+            FilterExpression: 'tenantId = :tenantId',
+            ExpressionAttributeValues: {
+                ':tenantId': tenantId
+            }
+        };
+        
+        const result = await dynamodb.scan(params).promise();
+        
+        return {
+            statusCode: 200,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                success: true,
+                data: result.Items || []
+            })
+        };
+        
+    } catch (error) {
+        console.error('Error getting appointment instances for tenant:', error);
+        throw error;
+    }
+}
+
+/**
+ * Create appointment instances
+ */
+async function createAppointmentInstances(request) {
+    try {
+        console.log('Creating appointment instances:', request);
+        
+        const { activityIds, activities, tenantId } = request;
+        
+        if (!activityIds || !activities || !tenantId) {
+            throw new Error('Missing required fields: activityIds, activities, tenantId');
+        }
+        
+        const instances = [];
+        
+        for (let i = 0; i < activityIds.length; i++) {
+            const activityId = activityIds[i];
+            const activity = activities[i];
+            
+            // Generate unique customer access token
+            const customerAccessToken = generateCustomerAccessToken();
+            
+            const instance = {
+                customerAccessToken,
+                tenantId,
+                fsmActivity: {
+                    id: activity.id,
+                    code: activity.code,
+                    subject: activity.subject,
+                    status: activity.status,
+                    businessPartner: activity.businessPartner,
+                    object: activity.object,
+                    equipment: activity.equipment || {}
+                },
+                status: 'PENDING',
+                validFrom: new Date().toISOString(),
+                validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                customerBooking: {
+                    status: 'draft'
+                }
+            };
+            
+            // Save to DynamoDB
+            const params = {
+                TableName: APPOINTMENT_TABLE_NAME,
+                Item: instance
+            };
+            
+            await dynamodb.put(params).promise();
+            instances.push(instance);
+        }
+        
+        return {
+            statusCode: 200,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                success: true,
+                data: { instances }
+            })
+        };
+        
+    } catch (error) {
+        console.error('Error creating appointment instances:', error);
+        throw error;
+    }
+}
+
+/**
+ * Update customer booking
+ */
+async function updateCustomerBooking(customerAccessToken, bookingData) {
+    try {
+        console.log('Updating customer booking:', { customerAccessToken, bookingData });
+        
+        // Get the existing appointment instance
+        const getParams = {
+            TableName: APPOINTMENT_TABLE_NAME,
+            Key: {
+                customerAccessToken: customerAccessToken
+            }
+        };
+        
+        const existingInstance = await dynamodb.get(getParams).promise();
+        
+        if (!existingInstance.Item) {
+            throw new Error('Appointment instance not found');
+        }
+        
+        const instance = existingInstance.Item;
+        
+        // Determine the new status based on whether a date was requested
+        let newCustomerStatus = 'submitted';
+        let newInstanceStatus = 'SUBMITTED';
+        
+        if (bookingData.requestedDateTime) {
+            newCustomerStatus = 'requested';
+            newInstanceStatus = 'REQUESTED';
+        }
+        
+        // Update the appointment instance
+        const updateParams = {
+            TableName: APPOINTMENT_TABLE_NAME,
+            Key: {
+                customerAccessToken: customerAccessToken
+            },
+            UpdateExpression: 'SET #status = :status, customerBooking = :customerBooking, updatedAt = :updatedAt',
+            ExpressionAttributeNames: {
+                '#status': 'status'
+            },
+            ExpressionAttributeValues: {
+                ':status': newInstanceStatus,
+                ':customerBooking': {
+                    ...instance.customerBooking,
+                    ...bookingData,
+                    status: newCustomerStatus,
+                    submittedAt: new Date().toISOString(),
+                    lastModifiedAt: new Date().toISOString()
+                },
+                ':updatedAt': new Date().toISOString()
+            }
+        };
+        
+        await dynamodb.update(updateParams).promise();
+        
+        return {
+            statusCode: 200,
+            headers: corsHeaders,
+            body: JSON.stringify({
+                success: true,
+                message: 'Customer booking updated successfully',
+                status: newCustomerStatus
+            })
+        };
+        
+    } catch (error) {
+        console.error('Error updating customer booking:', error);
+        throw error;
+    }
+}
+
+/**
+ * Generate a unique customer access token
+ */
+function generateCustomerAccessToken() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 20; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
 }

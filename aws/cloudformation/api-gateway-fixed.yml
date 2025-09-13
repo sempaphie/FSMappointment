@@ -12,6 +12,11 @@ Parameters:
     Default: fsm-appointment-tenants
     Description: DynamoDB table name for tenant data
     
+  AppointmentTableName:
+    Type: String
+    Default: fsm-appointment-instances
+    Description: DynamoDB table name for appointment instances
+    
   LambdaDeploymentBucket:
     Type: String
     Description: S3 bucket name for Lambda deployment package
@@ -33,6 +38,7 @@ Resources:
       Environment:
         Variables:
           TENANT_TABLE_NAME: !Ref TenantTableName
+          APPOINTMENT_TABLE_NAME: !Ref AppointmentTableName
 
   # Lambda execution role
   TenantApiLambdaRole:
@@ -60,8 +66,12 @@ Resources:
                   - dynamodb:DeleteItem
                   - dynamodb:Query
                   - dynamodb:Scan
-                Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TenantTableName}*'
+                Resource: 
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TenantTableName}*'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AppointmentTableName}*'
 
+  # Note: Appointment Instances Table already exists and is managed separately
+  # The table 'fsm-appointment-instances' is referenced via environment variable
 
   # API Gateway
   TenantApiGateway:
@@ -250,9 +260,137 @@ Resources:
       - TenantIdGetMethod
       - TenantIdPutMethod
       - TenantIdOptionsMethod
+      - AppointmentPostMethod
+      - AppointmentOptionsMethod
+      - AppointmentTokenGetMethod
+      - AppointmentTokenPutMethod
+      - AppointmentTokenOptionsMethod
     Properties:
       RestApiId: !Ref TenantApiGateway
       StageName: !Ref Environment
+
+  # ============================================================================
+  # APPOINTMENT ROUTES
+  # ============================================================================
+
+  # Resource for /appointments
+  AppointmentResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt TenantApiGateway.RootResourceId
+      RestApiId: !Ref TenantApiGateway
+      PathPart: appointments
+
+  # POST method for /appointments (create appointment instances)
+  AppointmentPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      ResourceId: !Ref AppointmentResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TenantApiFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # OPTIONS method for /appointments (CORS preflight)
+  AppointmentOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      ResourceId: !Ref AppointmentResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TenantApiFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # Resource for /appointments/token
+  AppointmentTokenResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref AppointmentResource
+      RestApiId: !Ref TenantApiGateway
+      PathPart: token
+
+  # Resource for /appointments/token/{token}
+  AppointmentTokenIdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref AppointmentTokenResource
+      RestApiId: !Ref TenantApiGateway
+      PathPart: '{token}'
+
+  # GET method for /appointments/token/{token}
+  AppointmentTokenGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      ResourceId: !Ref AppointmentTokenIdResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TenantApiFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # PUT method for /appointments/token/{token}
+  AppointmentTokenPutMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      ResourceId: !Ref AppointmentTokenIdResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TenantApiFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # OPTIONS method for /appointments/token/{token} (CORS preflight)
+  AppointmentTokenOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      ResourceId: !Ref AppointmentTokenIdResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TenantApiFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
 
 Outputs:
   ApiGatewayUrl:
