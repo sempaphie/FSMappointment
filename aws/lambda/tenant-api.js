@@ -3,8 +3,11 @@
  * Handles CRUD operations for tenant data in DynamoDB
  */
 
-const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+
+const client = new DynamoDBClient({});
+const dynamodb = DynamoDBDocumentClient.from(client);
 
 const TENANT_TABLE_NAME = process.env.TENANT_TABLE_NAME || 'fsm-appointment-tenants';
 const APPOINTMENT_TABLE_NAME = process.env.APPOINTMENT_TABLE_NAME || 'fsm-appointment-instances';
@@ -109,11 +112,11 @@ async function validateTenant(queryParams) {
         const tenantId = `${accountId}_${companyId}`;
         
         const params = {
-            TableName: TABLE_NAME,
+            TableName: TENANT_TABLE_NAME,
             Key: { tenantId }
         };
         
-        const result = await dynamodb.get(params).promise();
+        const result = await dynamodb.send(new GetCommand(params));
         const tenant = result.Item;
         
         if (!tenant) {
@@ -248,12 +251,12 @@ async function createTenant(tenantData) {
         };
         
         const params = {
-            TableName: TABLE_NAME,
+            TableName: TENANT_TABLE_NAME,
             Item: newTenant,
             ConditionExpression: 'attribute_not_exists(tenantId)'
         };
         
-        await dynamodb.put(params).promise();
+        await dynamodb.send(new PutCommand(params));
         
         return {
             statusCode: 201,
@@ -307,11 +310,11 @@ async function getTenant(pathParams) {
     
     try {
         const params = {
-            TableName: TABLE_NAME,
+            TableName: TENANT_TABLE_NAME,
             Key: { tenantId }
         };
         
-        const result = await dynamodb.get(params).promise();
+        const result = await dynamodb.send(new GetCommand(params));
         
         if (!result.Item) {
             return {
@@ -382,7 +385,7 @@ async function updateTenant(pathParams, updateData) {
         });
         
         const params = {
-            TableName: TABLE_NAME,
+            TableName: TENANT_TABLE_NAME,
             Key: { tenantId },
             UpdateExpression: `SET ${updateExpressions.join(', ')}`,
             ExpressionAttributeValues: expressionAttributeValues,
@@ -390,7 +393,7 @@ async function updateTenant(pathParams, updateData) {
             ReturnValues: 'ALL_NEW'
         };
         
-        const result = await dynamodb.update(params).promise();
+        const result = await dynamodb.send(new UpdateCommand(params));
         
         return {
             statusCode: 200,
@@ -530,14 +533,14 @@ async function getAppointmentInstanceByToken(customerAccessToken) {
         
         // Scan the table to find the item with matching customerAccessToken
         const params = {
-            TableName: APPOINTMENT_TABLE_NAME,
+            TableName: APPOINTMENT_TENANT_TABLE_NAME,
             FilterExpression: 'customerAccessToken = :token',
             ExpressionAttributeValues: {
                 ':token': customerAccessToken
             }
         };
         
-        const result = await dynamodb.scan(params).promise();
+        const result = await dynamodb.send(new ScanCommand(params));
         
         if (!result.Items || result.Items.length === 0) {
             return {
@@ -573,14 +576,14 @@ async function getAllAppointmentInstancesForTenant(tenantId) {
         console.log('Getting all appointment instances for tenant:', tenantId);
         
         const params = {
-            TableName: APPOINTMENT_TABLE_NAME,
+            TableName: APPOINTMENT_TENANT_TABLE_NAME,
             FilterExpression: 'tenantId = :tenantId',
             ExpressionAttributeValues: {
                 ':tenantId': tenantId
             }
         };
         
-        const result = await dynamodb.scan(params).promise();
+        const result = await dynamodb.send(new ScanCommand(params));
         
         return {
             statusCode: 200,
@@ -645,11 +648,11 @@ async function createAppointmentInstances(request) {
             
             // Save to DynamoDB
             const params = {
-                TableName: APPOINTMENT_TABLE_NAME,
+                TableName: APPOINTMENT_TENANT_TABLE_NAME,
                 Item: instance
             };
             
-            await dynamodb.put(params).promise();
+            await dynamodb.send(new PutCommand(params));
             instances.push(instance);
         }
         
@@ -677,7 +680,7 @@ async function updateCustomerBooking(customerAccessToken, bookingData) {
         
         // First, find the existing appointment instance by scanning for customerAccessToken
         const scanParams = {
-            TableName: APPOINTMENT_TABLE_NAME,
+            TableName: APPOINTMENT_TENANT_TABLE_NAME,
             FilterExpression: 'customerAccessToken = :token',
             ExpressionAttributeValues: {
                 ':token': customerAccessToken
@@ -703,7 +706,7 @@ async function updateCustomerBooking(customerAccessToken, bookingData) {
         
         // Update the appointment instance using the correct primary key
         const updateParams = {
-            TableName: APPOINTMENT_TABLE_NAME,
+            TableName: APPOINTMENT_TENANT_TABLE_NAME,
             Key: {
                 tenantId: instance.tenantId,
                 instanceId: instance.instanceId
