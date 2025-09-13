@@ -1,4 +1,5 @@
 # FSM Appointment Manager
+<!-- Updated: 2025-01-13 - Fixed routing and ShellSDK issues -->
 
 A modern React application for managing SAP Field Service Management (FSM) appointments with a clean, responsive interface.
 
