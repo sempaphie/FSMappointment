@@ -13,9 +13,7 @@
     "ui": ["SHELL_HOME_SCREEN"]
   },
   "useShellSDK": true,
-  "outletPositions": [
-		"SHELL_HOME_SCREEN"
-	],
+  "outletPositions": { "application": "shell", "position": "fullScreen", "href": "/" },
   "routes": [
     {
       "path": "/",
