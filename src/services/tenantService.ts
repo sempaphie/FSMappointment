@@ -4,6 +4,7 @@
  */
 
 import { shellSdkService, type FSMContext } from './shellSdkService'
+import { apiTenantService } from './apiTenantService'
 
 // Dynamically import DynamoDB service only when needed
 let dynamoDBTenantService: any = null
@@ -54,18 +55,18 @@ class TenantServiceImpl {
   private readonly TENANT_KEY_PREFIX = 'fsm_tenant_'
   private readonly DEFAULT_LICENSE_DAYS = 14
   
-  private get useDynamoDB(): boolean {
+  private get useApi(): boolean {
     // Check if we're in a browser environment
     if (typeof window !== 'undefined') {
-      // In browser, only use DynamoDB if explicitly enabled via environment variable
-      const useDynamo = import.meta.env.VITE_USE_DYNAMODB === 'true'
-      console.log('Browser environment - useDynamoDB:', useDynamo, 'VITE_USE_DYNAMODB:', import.meta.env.VITE_USE_DYNAMODB)
-      return useDynamo
+      // In browser, use API if explicitly enabled via environment variable
+      const useApi = import.meta.env.VITE_USE_DYNAMODB === 'true'
+      console.log('Browser environment - useApi:', useApi, 'VITE_USE_DYNAMODB:', import.meta.env.VITE_USE_DYNAMODB)
+      return useApi
     }
     // In Node.js environment (build time), use production logic
-    const useDynamo = process.env.NODE_ENV === 'production' || process.env.USE_DYNAMODB === 'true'
-    console.log('Node.js environment - useDynamoDB:', useDynamo, 'NODE_ENV:', process.env.NODE_ENV)
-    return useDynamo
+    const useApi = process.env.NODE_ENV === 'production' || process.env.USE_DYNAMODB === 'true'
+    console.log('Node.js environment - useApi:', useApi, 'NODE_ENV:', process.env.NODE_ENV)
+    return useApi
   }
 
   private async getDynamoDBService() {
@@ -97,11 +98,14 @@ class TenantServiceImpl {
         }
       }
 
-      if (this.useDynamoDB) {
-        // Use DynamoDB for production
-        const dynamoService = await this.getDynamoDBService()
-        return await dynamoService.validateTenant(context.accountId, context.companyId)
+      console.log('validateTenant - useApi:', this.useApi, 'VITE_USE_DYNAMODB:', import.meta.env.VITE_USE_DYNAMODB)
+      
+      if (this.useApi) {
+        // Use API Gateway for production
+        console.log('Using API Gateway for validateTenant')
+        return await apiTenantService.validateTenant(context.accountId, context.companyId)
       } else {
+        console.log('Using localStorage for validateTenant')
         // Use localStorage for development
         const tenantKey = this.generateTenantKey(context)
         const tenant = await this.getTenant(tenantKey)
@@ -161,10 +165,12 @@ class TenantServiceImpl {
         throw new Error('No FSM context available')
       }
 
-      if (this.useDynamoDB) {
-        // Use DynamoDB for production
-        const dynamoService = await this.getDynamoDBService()
-        const dynamoDBTenant = await dynamoService.createTenant(
+      console.log('createTenant - useApi:', this.useApi, 'VITE_USE_DYNAMODB:', import.meta.env.VITE_USE_DYNAMODB)
+      
+      if (this.useApi) {
+        // Use API Gateway for production
+        console.log('Using API Gateway for createTenant')
+        return await apiTenantService.createTenant(
           context.accountId,
           context.companyId,
           context.accountName,
@@ -172,27 +178,8 @@ class TenantServiceImpl {
           context.cluster,
           formData
         )
-        
-        // Convert DynamoDB format to our format
-        return {
-          accountId: dynamoDBTenant.accountId,
-          accountName: dynamoDBTenant.accountName,
-          companyId: dynamoDBTenant.companyId,
-          companyName: dynamoDBTenant.companyName,
-          cluster: dynamoDBTenant.cluster,
-          contactCompanyName: dynamoDBTenant.contactCompanyName,
-          contactFullName: dynamoDBTenant.contactFullName,
-          contactPhone: dynamoDBTenant.contactPhone,
-          contactEmailAddress: dynamoDBTenant.contactEmailAddress,
-          clientId: dynamoDBTenant.clientId,
-          clientSecret: dynamoDBTenant.clientSecret,
-          validFrom: dynamoDBTenant.validFrom,
-          validTo: dynamoDBTenant.validTo,
-          createdAt: dynamoDBTenant.createdAt,
-          updatedAt: dynamoDBTenant.updatedAt,
-          isActive: dynamoDBTenant.isActive
-        }
       } else {
+        console.log('Using localStorage for createTenant')
         // Use localStorage for development
         const now = new Date()
         const validFrom = now.toISOString()
