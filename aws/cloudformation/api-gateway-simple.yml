@@ -1,0 +1,161 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Simple API Gateway and Lambda functions for FSM Appointment Manager tenant management'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+
+  TenantTableName:
+    Type: String
+    Default: fsm-appointment-tenants
+    Description: Name of the DynamoDB table for tenant data
+
+Resources:
+  # Lambda execution role
+  TenantApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'fsm-tenant-api-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TenantTableName}'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TenantTableName}/index/*'
+
+  # Lambda function
+  TenantApiFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'fsm-tenant-api-${Environment}'
+      Runtime: nodejs18.x
+      Handler: tenant-api.handler
+      Role: !GetAtt TenantApiRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({ message: 'Function deployed successfully' })
+            };
+          };
+      Environment:
+        Variables:
+          TENANT_TABLE_NAME: !Ref TenantTableName
+      Timeout: 30
+      MemorySize: 256
+
+  # API Gateway
+  TenantApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub 'fsm-tenant-api-${Environment}'
+      Description: API Gateway for FSM Appointment Manager tenant management
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # Lambda permission for API Gateway
+  TenantApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TenantApiFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${TenantApiGateway}/*/*'
+
+  # API Gateway deployment
+  TenantApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - TenantApiCors
+      - TenantAnyMethod
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      StageName: !Ref Environment
+
+  # API Gateway CORS
+  TenantApiCors:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      ResourceId: !GetAtt TenantApiGateway.RootResourceId
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+
+  # Catch-all method for all HTTP methods
+  TenantAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      ResourceId: !GetAtt TenantApiGateway.RootResourceId
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TenantApiFunction.Arn}/invocations'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        PassthroughBehavior: WHEN_NO_MATCH
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+Outputs:
+  ApiGatewayUrl:
+    Description: API Gateway URL
+    Value: !Sub 'https://${TenantApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiGatewayUrl'
+  
+  TenantApiFunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt TenantApiFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TenantApiFunctionArn'
+  
+  ApiGatewayId:
+    Description: API Gateway ID
+    Value: !Ref TenantApiGateway
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiGatewayId'

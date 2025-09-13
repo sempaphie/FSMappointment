@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { ActivitiesList } from '../components/ActivitiesList'
-import { FSMContextInfo } from '../components/FSMContextInfo'
 import { authService } from '../services'
 
 export const Dashboard: React.FC = () => {
@@ -28,9 +27,6 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* FSM Context Info */}
-      <FSMContextInfo />
-      
       {/* Activities List */}
       {bearerToken ? (
         <ActivitiesList bearerToken={bearerToken} />

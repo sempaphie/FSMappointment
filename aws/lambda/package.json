@@ -1,0 +1,15 @@
+{
+  "name": "tenant-api",
+  "version": "1.0.0",
+  "description": "Lambda function for tenant management API",
+  "main": "tenant-api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1691.0"
+  },
+  "keywords": ["lambda", "dynamodb", "tenant", "api"],
+  "author": "FSM Appointment Manager",
+  "license": "MIT"
+}
