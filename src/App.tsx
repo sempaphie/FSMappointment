@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout'
 import { Dashboard, CustomerBooking } from './pages'
+import { InstancesPage } from './pages/InstancesPage'
 
 function App() {
   return (
@@ -10,6 +11,13 @@ function App() {
         <Route path="/" element={
           <Layout>
             <Dashboard />
+          </Layout>
+        } />
+        
+        {/* Instances Management Interface */}
+        <Route path="/instances" element={
+          <Layout>
+            <InstancesPage />
           </Layout>
         } />
         

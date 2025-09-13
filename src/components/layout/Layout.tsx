@@ -13,7 +13,7 @@ export const Layout: React.FC<LayoutProps> = ({
   subtitle 
 }) => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ background: 'var(--sap-background-color)' }}>
       <Header title={title} subtitle={subtitle} />
       <main className="container mx-auto px-4 py-8">
         {children}
