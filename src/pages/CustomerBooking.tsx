@@ -11,6 +11,7 @@ export const CustomerBooking: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [isFSMUser, setIsFSMUser] = useState(false)
   
   // Form state
   const [formData, setFormData] = useState({
@@ -22,6 +23,14 @@ export const CustomerBooking: React.FC = () => {
     requestedDateTime: ''
   })
   
+
+  // Check if user is FSM user (has FSM context)
+  useEffect(() => {
+    const fsmContext = (window as any).FSMContext
+    if (fsmContext) {
+      setIsFSMUser(true)
+    }
+  }, [])
 
   // Load appointment instance
   useEffect(() => {
@@ -50,7 +59,10 @@ export const CustomerBooking: React.FC = () => {
               requestedDateTime: booking.requestedDateTime || ''
             })
             
-            if (booking.status === 'submitted' || booking.status === 'approved') {
+            // Check if customer has already submitted (any status other than 'draft')
+            // FSM users can always see the form, customers only if not submitted
+            const fsmContext = (window as any).FSMContext
+            if (!fsmContext && (booking.status === 'submitted' || booking.status === 'requested' || booking.status === 'approved' || booking.status === 'rejected')) {
               setSubmitted(true)
             }
           }
@@ -107,6 +119,10 @@ export const CustomerBooking: React.FC = () => {
           ? `Your appointment request for ${new Date(formData.requestedDateTime).toLocaleString()} has been submitted successfully! We will contact you soon to confirm the details.`
           : 'Your appointment request has been submitted successfully! We will contact you soon to confirm the details.'
         alert(message)
+        
+        // Note: The backend Lambda function needs to be updated to:
+        // 1. Change instance status from 'PENDING' to 'SUBMITTED' or 'REQUESTED' based on whether a date was provided
+        // 2. Set the customerBooking.status accordingly
       } else {
         alert(`Error submitting request: ${result.error}`)
       }
@@ -177,8 +193,22 @@ export const CustomerBooking: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--sap-text-color)' }}>Schedule Your Appointment</h1>
-          <p style={{ color: 'var(--sap-text-color-secondary)' }}>Please fill out the form below to request your appointment</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--sap-text-color)' }}>
+            {isFSMUser ? 'Appointment Details - FSM View' : 'Schedule Your Appointment'}
+          </h1>
+          <p style={{ color: 'var(--sap-text-color-secondary)' }}>
+            {isFSMUser 
+              ? 'View and manage customer appointment details'
+              : 'Please fill out the form below to request your appointment'
+            }
+          </p>
+          {isFSMUser && (
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-700">
+                🔧 FSM User View - You can see all details and manage this appointment
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Service Details */}
