@@ -122,3 +122,6 @@ export interface AppointmentFilters extends PaginationParams {
 
 // Re-export FSM types
 export * from './fsm'
+
+// Re-export appointment types
+export * from './appointment'

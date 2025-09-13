@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { activitiesService, type FSMActivity } from '../services'
+import { activitiesService, appointmentService, type FSMActivity } from '../services'
 import { Card, CardContent, CardHeader, CardTitle } from './ui'
 import { Button } from './ui/Button'
 import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink } from 'lucide-react'
+import type { AppointmentInstance } from '../types'
 
 interface ActivitiesListProps {
   bearerToken: string
@@ -15,6 +16,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   const [selectedActivities, setSelectedActivities] = useState<Set<string>>(new Set())
   const [appointmentLoading, setAppointmentLoading] = useState(false)
   const [appointmentRequests, setAppointmentRequests] = useState<Set<string>>(new Set())
+  const [appointmentInstances, setAppointmentInstances] = useState<AppointmentInstance[]>([])
 
   const handleGetActivities = async () => {
     setLoading(true)
@@ -43,6 +45,24 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
       handleGetActivities()
     }
   }, [bearerToken])
+
+  // Load existing appointment instances
+  useEffect(() => {
+    const loadAppointmentInstances = async () => {
+      try {
+        const instances = await appointmentService.getAllInstancesForTenant()
+        setAppointmentInstances(instances)
+        
+        // Update appointment requests set based on existing instances
+        const existingActivityIds = instances.map(instance => instance.fsmActivity.activityId)
+        setAppointmentRequests(new Set(existingActivityIds))
+      } catch (error) {
+        console.error('Error loading appointment instances:', error)
+      }
+    }
+    
+    loadAppointmentInstances()
+  }, [])
 
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
@@ -79,16 +99,37 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
 
       console.log('Generating appointment requests for:', selectedActivitiesData)
       
-      // TODO: Implement actual appointment request generation API call
-      // For now, just show a success message
-      alert(`Successfully generated appointment requests for ${selectedActivitiesData.length} activities!`)
+      // Create appointment instances using the appointment service
+      const result = await appointmentService.createAppointmentInstances({
+        activityIds: selectedActivitiesData.map(activity => activity.id || `activity-${activities.indexOf(activity)}`),
+        activities: selectedActivitiesData.map(activity => ({
+          id: activity.id || `activity-${activities.indexOf(activity)}`,
+          code: activity.code || 'N/A',
+          subject: activity.subject || 'No Subject',
+          status: activity.status || 'Unknown',
+          businessPartner: activity.businessPartner || 'Unknown',
+          object: activity.object
+        }))
+      })
       
-      // Move selected activities to appointment requests
-      const newAppointmentRequests = new Set([...appointmentRequests, ...selectedActivities])
-      setAppointmentRequests(newAppointmentRequests)
-      
-      // Clear selection after successful generation
-      setSelectedActivities(new Set())
+      if (result.success && result.instances) {
+        // Update state with new instances
+        setAppointmentInstances(prev => [...prev, ...result.instances!])
+        
+        // Move selected activities to appointment requests
+        const newAppointmentRequests = new Set([...appointmentRequests, ...selectedActivities])
+        setAppointmentRequests(newAppointmentRequests)
+        
+        // Clear selection after successful generation
+        setSelectedActivities(new Set())
+        
+        // Show success message with customer URLs
+        const customerUrls = result.customerUrls || []
+        const message = `Successfully created ${result.instances.length} appointment request(s)!\n\nCustomer URLs:\n${customerUrls.join('\n')}`
+        alert(message)
+      } else {
+        alert(`Error creating appointment requests: ${result.error || 'Unknown error'}`)
+      }
       
     } catch (error) {
       console.error('Error generating appointment requests:', error)
@@ -102,15 +143,18 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     const activityId = activity.id || `activity-${activities.indexOf(activity)}`
     console.log('Opening instance for activity:', activity)
     
-    // TODO: Implement actual instance opening logic
-    // For now, show a placeholder message
-    alert(`Opening appointment instance for activity: ${activity.code || activityId}`)
+    // Find the appointment instance for this activity
+    const instance = appointmentInstances.find(inst => 
+      inst.fsmActivity.activityId === activityId
+    )
     
-    // This could be:
-    // - Opening a modal with appointment details
-    // - Navigating to a new page
-    // - Opening an external link
-    // - Calling an API to get appointment details
+    if (instance) {
+      // Open customer URL in new tab
+      window.open(instance.customerUrl, '_blank')
+      console.log('Opened customer URL:', instance.customerUrl)
+    } else {
+      alert(`No appointment instance found for activity: ${activity.code || activityId}`)
+    }
   }
 
   const getStatusBadge = (status?: string) => {
