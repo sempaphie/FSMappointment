@@ -9,7 +9,7 @@ import type {
 } from '../types/appointment'
 
 // AWS API Configuration
-const AWS_API_BASE_URL = import.meta.env.VITE_AWS_API_BASE_URL || 'https://your-api-gateway-url.amazonaws.com/prod'
+const AWS_API_BASE_URL = import.meta.env.VITE_AWS_API_BASE_URL || 'https://duqc5lj1qa.execute-api.eu-north-1.amazonaws.com/prod'
 
 // Get tenant ID from environment
 const getTenantId = (): string => {
