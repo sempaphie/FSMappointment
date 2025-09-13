@@ -1,0 +1,12 @@
+{
+  "name": "fsm-appointment-api",
+  "version": "1.0.0",
+  "description": "AWS Lambda function for FSM Appointment API",
+  "main": "appointment-api.js",
+  "dependencies": {
+    "aws-sdk": "^2.1691.0"
+  },
+  "scripts": {
+    "deploy": "zip -r appointment-api.zip . && aws lambda update-function-code --function-name fsm-appointment-api --zip-file fileb://appointment-api.zip"
+  }
+}
