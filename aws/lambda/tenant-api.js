@@ -528,16 +528,18 @@ async function getAppointmentInstanceByToken(customerAccessToken) {
     try {
         console.log('Getting appointment instance by token:', customerAccessToken);
         
+        // Scan the table to find the item with matching customerAccessToken
         const params = {
             TableName: APPOINTMENT_TABLE_NAME,
-            Key: {
-                customerAccessToken: customerAccessToken
+            FilterExpression: 'customerAccessToken = :token',
+            ExpressionAttributeValues: {
+                ':token': customerAccessToken
             }
         };
         
-        const result = await dynamodb.get(params).promise();
+        const result = await dynamodb.scan(params).promise();
         
-        if (!result.Item) {
+        if (!result.Items || result.Items.length === 0) {
             return {
                 statusCode: 404,
                 headers: corsHeaders,
@@ -553,7 +555,7 @@ async function getAppointmentInstanceByToken(customerAccessToken) {
             headers: corsHeaders,
             body: JSON.stringify({
                 success: true,
-                data: result.Item
+                data: result.Items[0]
             })
         };
         
@@ -614,12 +616,14 @@ async function createAppointmentInstances(request) {
             const activityId = activityIds[i];
             const activity = activities[i];
             
-            // Generate unique customer access token
+            // Generate unique customer access token and instance ID
             const customerAccessToken = generateCustomerAccessToken();
+            const instanceId = `inst_${Date.now()}_${generateCustomerAccessToken()}`;
             
             const instance = {
-                customerAccessToken,
                 tenantId,
+                instanceId,
+                customerAccessToken,
                 fsmActivity: {
                     id: activity.id,
                     code: activity.code,
@@ -671,21 +675,22 @@ async function updateCustomerBooking(customerAccessToken, bookingData) {
     try {
         console.log('Updating customer booking:', { customerAccessToken, bookingData });
         
-        // Get the existing appointment instance
-        const getParams = {
+        // First, find the existing appointment instance by scanning for customerAccessToken
+        const scanParams = {
             TableName: APPOINTMENT_TABLE_NAME,
-            Key: {
-                customerAccessToken: customerAccessToken
+            FilterExpression: 'customerAccessToken = :token',
+            ExpressionAttributeValues: {
+                ':token': customerAccessToken
             }
         };
         
-        const existingInstance = await dynamodb.get(getParams).promise();
+        const scanResult = await dynamodb.scan(scanParams).promise();
         
-        if (!existingInstance.Item) {
+        if (!scanResult.Items || scanResult.Items.length === 0) {
             throw new Error('Appointment instance not found');
         }
         
-        const instance = existingInstance.Item;
+        const instance = scanResult.Items[0];
         
         // Determine the new status based on whether a date was requested
         let newCustomerStatus = 'submitted';
@@ -696,11 +701,12 @@ async function updateCustomerBooking(customerAccessToken, bookingData) {
             newInstanceStatus = 'REQUESTED';
         }
         
-        // Update the appointment instance
+        // Update the appointment instance using the correct primary key
         const updateParams = {
             TableName: APPOINTMENT_TABLE_NAME,
             Key: {
-                customerAccessToken: customerAccessToken
+                tenantId: instance.tenantId,
+                instanceId: instance.instanceId
             },
             UpdateExpression: 'SET #status = :status, customerBooking = :customerBooking, updatedAt = :updatedAt',
             ExpressionAttributeNames: {
