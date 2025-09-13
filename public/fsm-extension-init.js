@@ -78,7 +78,8 @@
       // Listen for context response
       shellSdk.on(SHELL_EVENTS.Version1.REQUIRE_CONTEXT, function(event) {
         try {
-          const context = JSON.parse(event);
+          // Handle both string and object responses
+          const context = typeof event === 'string' ? JSON.parse(event) : event;
           console.log('FSM Context received:', context);
           
           // Make ShellSDK and context available globally

@@ -129,6 +129,7 @@ function App() {
           
           {/* Customer Booking Interface */}
           <Route path="/booking/:token" element={<CustomerBooking />} />
+          <Route path="/booking/:token/" element={<CustomerBooking />} />
         </Routes>
       </Router>
     </FSMProvider>
