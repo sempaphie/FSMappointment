@@ -6,8 +6,6 @@
 import { shellSdkService, type FSMContext } from './shellSdkService'
 import { apiTenantService } from './apiTenantService'
 
-// Dynamically import DynamoDB service only when needed
-let dynamoDBTenantService: any = null
 
 export interface TenantData {
   // From ShellSDK
@@ -47,7 +45,7 @@ export interface TenantSetupFormData {
 export interface TenantValidationResult {
   isValid: boolean
   tenant?: TenantData
-  error?: 'NOT_FOUND' | 'EXPIRED' | 'INACTIVE'
+  error?: 'NOT_FOUND' | 'EXPIRED' | 'INACTIVE' | 'ERROR'
   message?: string
 }
 
@@ -69,13 +67,6 @@ class TenantServiceImpl {
     return useApi
   }
 
-  private async getDynamoDBService() {
-    if (!dynamoDBTenantService) {
-      const { dynamoDBTenantService: service } = await import('./dynamoDBTenantService')
-      dynamoDBTenantService = service
-    }
-    return dynamoDBTenantService
-  }
 
   /**
    * Generate tenant key from FSM context
