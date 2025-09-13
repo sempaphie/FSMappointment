@@ -2,7 +2,7 @@
   "id": "com.fsmappointment.appointmentmanager",
   "name": "FSM Appointment Manager",
   "description": "Manage field service appointment requests and customer bookings efficiently",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "icon": "https://d3do02kvz5vver.cloudfront.net/vite.svg",
   "outlet": "SHELL_HOME_SCREEN",
   "url": "/",
@@ -12,6 +12,10 @@
     "data": ["READ", "WRITE"],
     "ui": ["SHELL_HOME_SCREEN"]
   },
+  "useShellSDK": true,
+  "outletPositions": [
+		"SHELL_HOME_SCREEN"
+	],
   "routes": [
     {
       "path": "/",
