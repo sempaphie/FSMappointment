@@ -1,21 +1,10 @@
 {
+  "id": "com.fsmappointment.appointmentmanager",
   "name": "FSM Appointment Manager",
-  "version": "1.0.0",
   "description": "Manage field service appointment requests and customer bookings efficiently",
+  "version": "1.0.0",
   "icon": "https://d3do02kvz5vver.cloudfront.net/vite.svg",
-  "routes": [
-    { "path": "/", "title": "Dashboard" },
-    { "path": "/instances", "title": "Appointment Instances" },
-    { "path": "/booking/:token", "title": "Customer Booking" }
-  ],
-  "outlets": [
-    { 
-      "application": "shell", 
-      "position": "homeScreen", 
-      "href": "/",
-      "title": "Appointment Manager",
-      "description": "Manage your field service appointments efficiently",
-      "icon": "calendar"
-    }
-  ]
+  "outlet": "SHELL_HOME_SCREEN",
+  "url": "/",
+  "roles": ["SERVICE_MANAGER", "FIELD_SERVICE_TECHNICIAN", "DISPATCHER"]
 }
