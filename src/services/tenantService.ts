@@ -4,7 +4,9 @@
  */
 
 import { shellSdkService, type FSMContext } from './shellSdkService'
-import { dynamoDBTenantService } from './dynamoDBTenantService'
+
+// Dynamically import DynamoDB service only when needed
+let dynamoDBTenantService: any = null
 
 export interface TenantData {
   // From ShellSDK
@@ -51,7 +53,28 @@ export interface TenantValidationResult {
 class TenantServiceImpl {
   private readonly TENANT_KEY_PREFIX = 'fsm_tenant_'
   private readonly DEFAULT_LICENSE_DAYS = 14
-  private useDynamoDB = process.env.NODE_ENV === 'production' || process.env.USE_DYNAMODB === 'true'
+  
+  private get useDynamoDB(): boolean {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined') {
+      // In browser, only use DynamoDB if explicitly enabled via environment variable
+      const useDynamo = import.meta.env.VITE_USE_DYNAMODB === 'true'
+      console.log('Browser environment - useDynamoDB:', useDynamo, 'VITE_USE_DYNAMODB:', import.meta.env.VITE_USE_DYNAMODB)
+      return useDynamo
+    }
+    // In Node.js environment (build time), use production logic
+    const useDynamo = process.env.NODE_ENV === 'production' || process.env.USE_DYNAMODB === 'true'
+    console.log('Node.js environment - useDynamoDB:', useDynamo, 'NODE_ENV:', process.env.NODE_ENV)
+    return useDynamo
+  }
+
+  private async getDynamoDBService() {
+    if (!dynamoDBTenantService) {
+      const { dynamoDBTenantService: service } = await import('./dynamoDBTenantService')
+      dynamoDBTenantService = service
+    }
+    return dynamoDBTenantService
+  }
 
   /**
    * Generate tenant key from FSM context
@@ -76,7 +99,8 @@ class TenantServiceImpl {
 
       if (this.useDynamoDB) {
         // Use DynamoDB for production
-        return await dynamoDBTenantService.validateTenant(context.accountId, context.companyId)
+        const dynamoService = await this.getDynamoDBService()
+        return await dynamoService.validateTenant(context.accountId, context.companyId)
       } else {
         // Use localStorage for development
         const tenantKey = this.generateTenantKey(context)
@@ -139,7 +163,8 @@ class TenantServiceImpl {
 
       if (this.useDynamoDB) {
         // Use DynamoDB for production
-        const dynamoDBTenant = await dynamoDBTenantService.createTenant(
+        const dynamoService = await this.getDynamoDBService()
+        const dynamoDBTenant = await dynamoService.createTenant(
           context.accountId,
           context.companyId,
           context.accountName,
