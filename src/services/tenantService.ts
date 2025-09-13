@@ -4,6 +4,7 @@
  */
 
 import { shellSdkService, type FSMContext } from './shellSdkService'
+import { dynamoDBTenantService, type TenantData as DynamoDBTenantData } from './dynamoDBTenantService'
 
 export interface TenantData {
   // From ShellSDK
@@ -50,6 +51,7 @@ export interface TenantValidationResult {
 class TenantServiceImpl {
   private readonly TENANT_KEY_PREFIX = 'fsm_tenant_'
   private readonly DEFAULT_LICENSE_DAYS = 14
+  private useDynamoDB = process.env.NODE_ENV === 'production' || process.env.USE_DYNAMODB === 'true'
 
   /**
    * Generate tenant key from FSM context
@@ -72,41 +74,47 @@ class TenantServiceImpl {
         }
       }
 
-      const tenantKey = this.generateTenantKey(context)
-      const tenant = await this.getTenant(tenantKey)
+      if (this.useDynamoDB) {
+        // Use DynamoDB for production
+        return await dynamoDBTenantService.validateTenant(context.accountId, context.companyId)
+      } else {
+        // Use localStorage for development
+        const tenantKey = this.generateTenantKey(context)
+        const tenant = await this.getTenant(tenantKey)
 
-      if (!tenant) {
-        return {
-          isValid: false,
-          error: 'NOT_FOUND',
-          message: 'Tenant not found. Setup required.'
+        if (!tenant) {
+          return {
+            isValid: false,
+            error: 'NOT_FOUND',
+            message: 'Tenant not found. Setup required.'
+          }
         }
-      }
 
-      if (!tenant.isActive) {
-        return {
-          isValid: false,
-          error: 'INACTIVE',
-          message: 'Tenant is inactive'
+        if (!tenant.isActive) {
+          return {
+            isValid: false,
+            error: 'INACTIVE',
+            message: 'Tenant is inactive'
+          }
         }
-      }
 
-      const now = new Date()
-      const validTo = new Date(tenant.validTo)
+        const now = new Date()
+        const validTo = new Date(tenant.validTo)
 
-      if (now > validTo) {
-        return {
-          isValid: false,
-          error: 'EXPIRED',
-          message: 'Tenant license has expired',
-          tenant
+        if (now > validTo) {
+          return {
+            isValid: false,
+            error: 'EXPIRED',
+            message: 'Tenant license has expired',
+            tenant
+          }
         }
-      }
 
-      return {
-        isValid: true,
-        tenant,
-        message: 'Tenant is valid'
+        return {
+          isValid: true,
+          tenant,
+          message: 'Tenant is valid'
+        }
       }
 
     } catch (error) {
@@ -129,41 +137,74 @@ class TenantServiceImpl {
         throw new Error('No FSM context available')
       }
 
-      const now = new Date()
-      const validFrom = now.toISOString()
-      const validTo = new Date(now.getTime() + (this.DEFAULT_LICENSE_DAYS * 24 * 60 * 60 * 1000)).toISOString()
+      if (this.useDynamoDB) {
+        // Use DynamoDB for production
+        const dynamoDBTenant = await dynamoDBTenantService.createTenant(
+          context.accountId,
+          context.companyId,
+          context.accountName,
+          context.companyName,
+          context.cluster,
+          formData
+        )
+        
+        // Convert DynamoDB format to our format
+        return {
+          accountId: dynamoDBTenant.accountId,
+          accountName: dynamoDBTenant.accountName,
+          companyId: dynamoDBTenant.companyId,
+          companyName: dynamoDBTenant.companyName,
+          cluster: dynamoDBTenant.cluster,
+          contactCompanyName: dynamoDBTenant.contactCompanyName,
+          contactFullName: dynamoDBTenant.contactFullName,
+          contactPhone: dynamoDBTenant.contactPhone,
+          contactEmailAddress: dynamoDBTenant.contactEmailAddress,
+          clientId: dynamoDBTenant.clientId,
+          clientSecret: dynamoDBTenant.clientSecret,
+          validFrom: dynamoDBTenant.validFrom,
+          validTo: dynamoDBTenant.validTo,
+          createdAt: dynamoDBTenant.createdAt,
+          updatedAt: dynamoDBTenant.updatedAt,
+          isActive: dynamoDBTenant.isActive
+        }
+      } else {
+        // Use localStorage for development
+        const now = new Date()
+        const validFrom = now.toISOString()
+        const validTo = new Date(now.getTime() + (this.DEFAULT_LICENSE_DAYS * 24 * 60 * 60 * 1000)).toISOString()
 
-      const tenant: TenantData = {
-        // From ShellSDK
-        accountId: context.accountId,
-        accountName: context.accountName,
-        companyId: context.companyId,
-        companyName: context.companyName,
-        cluster: context.cluster,
-        
-        // User provided data
-        contactCompanyName: formData.contactCompanyName,
-        contactFullName: formData.contactFullName,
-        contactPhone: formData.contactPhone,
-        contactEmailAddress: formData.contactEmailAddress,
-        clientId: formData.clientId,
-        clientSecret: formData.clientSecret,
-        
-        // License management
-        validFrom,
-        validTo,
-        
-        // Metadata
-        createdAt: validFrom,
-        updatedAt: validFrom,
-        isActive: true
+        const tenant: TenantData = {
+          // From ShellSDK
+          accountId: context.accountId,
+          accountName: context.accountName,
+          companyId: context.companyId,
+          companyName: context.companyName,
+          cluster: context.cluster,
+          
+          // User provided data
+          contactCompanyName: formData.contactCompanyName,
+          contactFullName: formData.contactFullName,
+          contactPhone: formData.contactPhone,
+          contactEmailAddress: formData.contactEmailAddress,
+          clientId: formData.clientId,
+          clientSecret: formData.clientSecret,
+          
+          // License management
+          validFrom,
+          validTo,
+          
+          // Metadata
+          createdAt: validFrom,
+          updatedAt: validFrom,
+          isActive: true
+        }
+
+        const tenantKey = this.generateTenantKey(context)
+        await this.saveTenant(tenantKey, tenant)
+
+        console.log('Tenant created successfully:', tenant)
+        return tenant
       }
-
-      const tenantKey = this.generateTenantKey(context)
-      await this.saveTenant(tenantKey, tenant)
-
-      console.log('Tenant created successfully:', tenant)
-      return tenant
 
     } catch (error) {
       console.error('Error creating tenant:', error)

@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'DynamoDB table for FSM Appointment Manager tenant data'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+
+Resources:
+  TenantTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: fsm-appointment-tenants
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: tenantId
+          AttributeType: S
+        - AttributeName: gsi1pk
+          AttributeType: S
+        - AttributeName: gsi1sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: tenantId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: gsi1pk
+              KeyType: HASH
+            - AttributeName: gsi1sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: FSMAppointmentManager
+        - Key: Purpose
+          Value: TenantData
+
+  # IAM Role for the application to access DynamoDB
+  TenantTableAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'fsm-appointment-tenant-access-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt TenantTable.Arn
+                  - !Sub '${TenantTable.Arn}/index/*'
+
+Outputs:
+  TenantTableName:
+    Description: Name of the tenant table
+    Value: !Ref TenantTable
+    Export:
+      Name: !Sub '${AWS::StackName}-TenantTableName'
+  
+  TenantTableArn:
+    Description: ARN of the tenant table
+    Value: !GetAtt TenantTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TenantTableArn'
+  
+  TenantTableAccessRoleArn:
+    Description: ARN of the IAM role for table access
+    Value: !GetAtt TenantTableAccessRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TenantTableAccessRoleArn'
