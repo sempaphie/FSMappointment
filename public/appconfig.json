@@ -1,19 +1,12 @@
 {
-  "id": "com.fsmappointment.appointmentmanager",
-  "name": "FSM Appointment Manager",
-  "description": "Manage field service appointment requests and customer bookings efficiently",
-  "version": "0.0.1",
-  "icon": "https://d3do02kvz5vver.cloudfront.net/vite.svg",
-  "outlet": "SHELL_HOME_SCREEN",
-  "url": "/",
-  "roles": ["SERVICE_MANAGER", "FIELD_SERVICE_TECHNICIAN", "DISPATCHER"],
-  "provider": "FSM Appointment Solutions",
-  "permissions": {
-    "data": ["READ", "WRITE"],
-    "ui": ["SHELL_HOME_SCREEN"]
-  },
+  "name": "UDO Manager",
+  "version": "0.1.0",
   "useShellSDK": true,
-  "outletPositions": { "application": "shell", "position": "fullScreen", "href": "/" },
+  "description": "View & maintain UDO meta/values",
+  "icon": "https://d3do02kvz5vver.cloudfront.net/vite.svg",
+  "outlets": [
+    { "application": "shell", "position": "fullScreen", "href": "/" }
+  ],
   "routes": [
     {
       "path": "/",
@@ -27,5 +20,4 @@
       "path": "/booking/:token",
       "title": "Customer Booking"
     }
-  ]
-}
+  ]}
