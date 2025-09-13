@@ -1,14 +1,14 @@
 {
   "name": "FSM Appointment Manager",
+  "provider": "FSM Appointment Solutions",
+  "description": "This extension allows you to manage field service appointment requests and customer bookings efficiently. Send appointment links to customers and handle booking confirmations.",
   "version": "0.1.0",
+  "icon": "https://raw.githubusercontent.com/SAP-samples/fsm-extension-sample/refactor/samples/login-with-token/frontend/icon.png",
+  "optimalHeight": 2000,
   "useShellSDK": true,
-  "description": "Manage field service appointment requests and customer bookings efficiently",
-  "icon": "https://d3do02kvz5vver.cloudfront.net/vite.svg",
-  "outlets": [
-    { 
-      "application": "shell", 
-      "position": "fullScreen", 
-      "href": "/" 
-    }
-  ]
+  "outletPositions": ["SHELL_HOME_SCREEN"],
+  "shellNavigation": {
+    "icon": "building",
+    "insideShell": true
+  }
 }
