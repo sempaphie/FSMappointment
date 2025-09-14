@@ -11,12 +11,35 @@ export const Dashboard: React.FC = () => {
     const fetchToken = async () => {
       setTokenLoading(true)
       try {
+        // Check if we're in development mode
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1' ||
+                             window.location.hostname.includes('localhost')
+        
+        if (isDevelopment) {
+          console.log('Development mode - using mock bearer token')
+          // Use a mock token for development
+          setBearerToken('dev-bearer-token-mock')
+          setTokenLoading(false)
+          return
+        }
+
+        // Production mode - get real token
         const result = await authService.getBearerToken()
         if (result.success && result.token) {
           setBearerToken(result.token)
         }
       } catch (error) {
         console.error('Failed to get token:', error)
+        // In development mode, still set mock token even if there's an error
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1' ||
+                             window.location.hostname.includes('localhost')
+        
+        if (isDevelopment) {
+          console.log('Development mode fallback - using mock bearer token')
+          setBearerToken('dev-bearer-token-mock')
+        }
       } finally {
         setTokenLoading(false)
       }

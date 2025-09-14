@@ -8,6 +8,74 @@ import type {
   TimeSlot
 } from '../types/appointment'
 
+// Mock appointment instances for development mode
+const getMockAppointmentInstances = (): AppointmentInstance[] => {
+  const now = new Date()
+  const validUntil = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+  
+  return [
+    {
+      instanceId: 'mock-instance-1',
+      tenantId: 'dev-tenant',
+      customerAccessToken: 'dev-token-1',
+      customerUrl: 'https://main.d354vm8a3zuelv.amplifyapp.com/booking/dev-token-1',
+      status: 'PENDING',
+      validFrom: now.toISOString(),
+      validUntil: validUntil.toISOString(),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      ttl: Math.floor(validUntil.getTime() / 1000),
+      fsmActivity: {
+        id: '01E12B09F87F4B458BAE623CBE6855AA',
+        activityId: '01E12B09F87F4B458BAE623CBE6855AA',
+        subject: 'Tankrevision inkl. Inspektion',
+        status: 'OPEN',
+        businessPartner: 'O\'Leary\'s Contractors',
+        equipment: {
+          code: 'EQ-001',
+          name: 'Doosan 250/HP185WDZ-T4F',
+          address: '1031 N. Cicero Ave., Chicago, US, 60651'
+        }
+      }
+    },
+    {
+      instanceId: 'mock-instance-2',
+      tenantId: 'dev-tenant',
+      customerAccessToken: 'dev-token-2',
+      customerUrl: 'https://main.d354vm8a3zuelv.amplifyapp.com/booking/dev-token-2',
+      status: 'SUBMITTED',
+      validFrom: now.toISOString(),
+      validUntil: validUntil.toISOString(),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      ttl: Math.floor(validUntil.getTime() / 1000),
+      fsmActivity: {
+        id: '12D86A8536034AD79AC3448B5F1F58E1',
+        activityId: '12D86A8536034AD79AC3448B5F1F58E1',
+        subject: 'Leckwarngert. Wartung',
+        status: 'OPEN',
+        businessPartner: 'Tech Solutions Inc',
+        equipment: {
+          code: 'EQ-002',
+          name: 'Leak Detection System Alpha',
+          address: '456 Industrial Blvd, Detroit, US, 48201'
+        }
+      },
+      customerBooking: {
+        customerName: 'John Doe',
+        customerEmail: 'john.doe@techsolutions.com',
+        customerPhone: '+1-555-0123',
+        preferredTimeSlots: [],
+        requestedDateTime: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        customerMessage: 'Please schedule for next week if possible',
+        status: 'submitted',
+        submittedAt: now.toISOString(),
+        lastModifiedAt: now.toISOString()
+      }
+    }
+  ]
+}
+
 // AWS API Configuration
 const AWS_API_BASE_URL = import.meta.env.VITE_TENANT_API_URL || 'https://40be8c42uc.execute-api.eu-north-1.amazonaws.com/dev'
 
@@ -119,6 +187,16 @@ export const awsAppointmentService = {
   },
 
   async getAllInstancesForTenant(): Promise<AppointmentInstance[]> {
+    // Check if we're in development mode
+    const isDevelopment = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1' ||
+                         window.location.hostname.includes('localhost')
+    
+    if (isDevelopment) {
+      console.log('Development mode - returning mock appointment instances')
+      return getMockAppointmentInstances()
+    }
+
     try {
       console.log('Getting all appointment instances for tenant via AWS API...')
       console.log('Tenant ID:', getTenantId())
@@ -138,6 +216,11 @@ export const awsAppointmentService = {
       return response.data || []
     } catch (error) {
       console.error('Error getting appointment instances:', error)
+      // In development mode, return mock data even if there's an error
+      if (isDevelopment) {
+        console.log('Development mode fallback - returning mock appointment instances')
+        return getMockAppointmentInstances()
+      }
       // Fallback to empty array if AWS is not available
       console.warn('Falling back to empty array due to AWS API error')
       return []

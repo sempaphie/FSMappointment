@@ -27,7 +27,39 @@ function App() {
           return
         }
 
-        // Initialize ShellSDK first
+        // Check if we're in development mode (localhost)
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1' ||
+                             window.location.hostname.includes('localhost')
+        
+        if (isDevelopment) {
+          console.log('Running in development mode - skipping FSM initialization')
+          // In development mode, go directly to ready state with mock tenant validation
+          setTenantValidation({
+            isValid: true,
+            tenant: {
+              accountId: 'dev-account',
+              accountName: 'Development Account',
+              companyId: 'dev-company',
+              companyName: 'Development Company',
+              cluster: 'dev-cluster',
+              contactCompanyName: 'Development Company',
+              contactFullName: 'Dev User',
+              contactEmailAddress: 'dev@example.com',
+              clientId: 'dev-client-id',
+              clientSecret: 'dev-client-secret',
+              validFrom: new Date().toISOString(),
+              validTo: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              isActive: true
+            }
+          })
+          setAppState('ready')
+          return
+        }
+
+        // Production mode - initialize ShellSDK and validate tenant
         await shellSdkService.initialize()
         
         // Validate tenant
@@ -45,8 +77,38 @@ function App() {
         }
       } catch (error) {
         console.error('Error initializing app:', error)
-        // Fallback to setup if there's an error
-        setAppState('setup')
+        // Check if we're in development mode for fallback
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1' ||
+                             window.location.hostname.includes('localhost')
+        
+        if (isDevelopment) {
+          console.log('Development mode fallback - setting ready state')
+          setTenantValidation({
+            isValid: true,
+            tenant: {
+              accountId: 'dev-account',
+              accountName: 'Development Account',
+              companyId: 'dev-company',
+              companyName: 'Development Company',
+              cluster: 'dev-cluster',
+              contactCompanyName: 'Development Company',
+              contactFullName: 'Dev User',
+              contactEmailAddress: 'dev@example.com',
+              clientId: 'dev-client-id',
+              clientSecret: 'dev-client-secret',
+              validFrom: new Date().toISOString(),
+              validTo: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              isActive: true
+            }
+          })
+          setAppState('ready')
+        } else {
+          // Fallback to setup if there's an error in production
+          setAppState('setup')
+        }
       }
     }
 

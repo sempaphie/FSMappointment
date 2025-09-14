@@ -180,17 +180,27 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   }
 
   const handleShowInstanceInfo = (activity: FSMActivity) => {
+    console.log('handleShowInstanceInfo called for activity:', activity)
     const activityId = activity.id || `activity-${activities.indexOf(activity)}`
+    console.log('Looking for activityId:', activityId)
+    console.log('Available appointment instances:', appointmentInstances.length)
     
     // Find the appointment instance for this activity
     const instance = appointmentInstances.find(inst => {
       const instActivityId = inst.fsmActivity.activityId || inst.fsmActivity.id
+      console.log('Comparing:', instActivityId, '===', activityId, '=', instActivityId === activityId)
       return instActivityId === activityId
     })
 
+    console.log('Found instance:', instance)
+
     if (instance) {
+      console.log('Setting selectedInstance and showing modal')
       setSelectedInstance(instance)
       setShowInstanceModal(true)
+    } else {
+      console.log('No instance found for activity:', activityId)
+      console.log('Available instances:', appointmentInstances.map(inst => inst.fsmActivity.activityId || inst.fsmActivity.id))
     }
   }
 
@@ -413,7 +423,10 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                       )}
                       <td>
                         <button
-                          onClick={() => handleShowInstanceInfo(activity)}
+                          onClick={() => {
+                            console.log('Info button clicked for activity:', activity)
+                            handleShowInstanceInfo(activity)
+                          }}
                           className="p-1 hover:bg-gray-100 rounded"
                           title="View appointment details"
                         >
