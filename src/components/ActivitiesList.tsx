@@ -17,12 +17,12 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   const [appointmentRequests, setAppointmentRequests] = useState<Set<string>>(new Set())
   const [appointmentInstances, setAppointmentInstances] = useState<AppointmentInstance[]>([])
 
-  const handleGetActivities = async () => {
+  const handleGetActivities = async (existingActivityIds: string[] = []) => {
     setLoading(true)
     setError(null)
 
     try {
-      const result = await activitiesService.getActivities(bearerToken)
+      const result = await activitiesService.getActivities(bearerToken, existingActivityIds)
 
       if (result.success && result.activities) {
         setActivities(result.activities)
@@ -38,16 +38,17 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     }
   }
 
-  // Auto-fetch activities when component mounts or token changes
-  useEffect(() => {
-    if (bearerToken) {
-      handleGetActivities()
-    }
-  }, [bearerToken])
+  const handleRefreshActivities = async () => {
+    // Get current existing activity IDs from appointment requests
+    const currentExistingIds = Array.from(appointmentRequests)
+    await handleGetActivities(currentExistingIds)
+  }
 
-  // Load existing appointment instances
+  // Load existing appointment instances first, then activities
   useEffect(() => {
-    const loadAppointmentInstances = async () => {
+    const loadData = async () => {
+      if (!bearerToken) return
+      
       try {
         console.log('Loading appointment instances...')
         const instances = await awsAppointmentService.getAllInstancesForTenant()
@@ -63,13 +64,16 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
         }).filter((id): id is string => Boolean(id)) // Remove any undefined values and ensure string type
         console.log('Existing activity IDs with appointments:', existingActivityIds)
         setAppointmentRequests(new Set(existingActivityIds))
+        
+        // Now load activities with existing activity IDs for proper filtering
+        await handleGetActivities(existingActivityIds)
       } catch (error) {
-        console.error('Error loading appointment instances:', error)
+        console.error('Error loading data:', error)
       }
     }
     
-    loadAppointmentInstances()
-  }, [])
+    loadData()
+  }, [bearerToken])
 
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
@@ -437,7 +441,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
 
           <div className="p-4 border-t" style={{ borderColor: 'var(--sap-border-color-light)', background: '#f8f9fa' }}>
             <button
-              onClick={handleGetActivities}
+              onClick={handleRefreshActivities}
               disabled={loading}
               className="sap-button w-full"
             >

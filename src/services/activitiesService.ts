@@ -84,11 +84,25 @@ interface ActivitiesResponse {
 
 
 // Filter function to only include activities that can have appointment instances created
-function filterEligibleActivities(activities: FSMActivity[]): FSMActivity[] {
+function filterEligibleActivities(activities: FSMActivity[], existingActivityIds: string[] = []): FSMActivity[] {
   console.log(`Filtering ${activities.length} activities for appointment eligibility`)
+  console.log(`Existing activity IDs with appointments:`, existingActivityIds)
   
   const filtered = activities.filter(activity => {
-    // Check if activity meets all criteria for appointment instance creation
+    const activityId = activity.id || `activity-${activities.indexOf(activity)}`
+    
+    // If activity already has an appointment instance, always include it
+    if (existingActivityIds.includes(activityId)) {
+      console.log(`Activity ${activityId} included (has existing appointment instance):`, {
+        status: activity.status,
+        executionStage: activity.executionStage,
+        type: activity.type,
+        subject: activity.subject
+      })
+      return true
+    }
+    
+    // For new activities, check if they meet criteria for appointment instance creation
     const isNotClosed = activity.status !== 'CLOSED'
     const isDispatching = activity.executionStage === 'DISPATCHING'
     const isAssignment = activity.type === 'ASSIGNMENT'
@@ -96,7 +110,7 @@ function filterEligibleActivities(activities: FSMActivity[]): FSMActivity[] {
     const isEligible = isNotClosed && isDispatching && isAssignment
     
     if (!isEligible) {
-      console.log(`Activity ${activity.id} filtered out:`, {
+      console.log(`Activity ${activityId} filtered out:`, {
         status: activity.status,
         executionStage: activity.executionStage,
         type: activity.type,
@@ -112,7 +126,7 @@ function filterEligibleActivities(activities: FSMActivity[]): FSMActivity[] {
 }
 
 export const activitiesService = {
-  async getActivities(bearerToken: string): Promise<{ success: boolean; activities?: FSMActivity[]; error?: string; details?: any }> {
+  async getActivities(bearerToken: string, existingActivityIds: string[] = []): Promise<{ success: boolean; activities?: FSMActivity[]; error?: string; details?: any }> {
     // Get FSM context and tenant data
     const fsmContext = shellSdkService.getContext()
     let tenant: TenantData | null = null
@@ -195,7 +209,7 @@ export const activitiesService = {
 
       if (activities.length > 0 || Array.isArray(activities)) {
         // Filter activities to only include those eligible for appointment instance creation
-        const filteredActivities = filterEligibleActivities(activities)
+        const filteredActivities = filterEligibleActivities(activities, existingActivityIds)
         return {
           success: true,
           activities: filteredActivities,
