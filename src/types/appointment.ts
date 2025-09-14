@@ -21,8 +21,10 @@ export interface AppointmentInstance {
   
   // FSM Activity reference
   fsmActivity: {
-    activityId: string
-    activityCode: string
+    activityId?: string  // Some instances use this field
+    id?: string          // Some instances use this field instead
+    activityCode?: string
+    code?: string        // Some instances use this field instead
     subject: string
     status: string
     businessPartner: string
@@ -48,13 +50,14 @@ export interface AppointmentInstance {
 }
 
 export type AppointmentInstanceStatus = 
-  | 'pending'        // Created but customer hasn't accessed yet
-  | 'active'         // Customer is actively booking
-  | 'scheduled'      // Customer has selected time slots
-  | 'confirmed'      // FSM user has confirmed the appointment
-  | 'rejected'       // FSM user has rejected the appointment
-  | 'expired'        // ValidUntil date has passed
-  | 'completed'      // Appointment has been completed
+  | 'PENDING'        // Created but customer hasn't accessed yet (uppercase from API)
+  | 'ACTIVE'         // Customer is actively booking
+  | 'SCHEDULED'      // Customer has selected time slots
+  | 'CONFIRMED'      // FSM user has confirmed the appointment
+  | 'REJECTED'       // FSM user has rejected the appointment
+  | 'EXPIRED'        // ValidUntil date has passed
+  | 'COMPLETED'      // Appointment has been completed
+  | 'SUBMITTED'      // Customer has submitted their booking
 
 export interface CustomerBooking {
   // Customer details

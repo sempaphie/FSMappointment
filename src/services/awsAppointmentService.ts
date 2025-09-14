@@ -121,15 +121,20 @@ export const awsAppointmentService = {
   async getAllInstancesForTenant(): Promise<AppointmentInstance[]> {
     try {
       console.log('Getting all appointment instances for tenant via AWS API...')
+      console.log('Tenant ID:', getTenantId())
+      console.log('API URL:', `${AWS_API_BASE_URL}/appointments?tenantId=${getTenantId()}`)
       
       const response = await makeApiCall(`/appointments?tenantId=${getTenantId()}`, {
         method: 'GET'
       })
 
+      console.log('API Response:', response)
+
       if (!response.success) {
         throw new Error('Failed to get appointment instances')
       }
 
+      console.log('Appointment instances retrieved:', response.data?.length || 0, 'instances')
       return response.data || []
     } catch (error) {
       console.error('Error getting appointment instances:', error)

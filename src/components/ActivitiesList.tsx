@@ -49,11 +49,19 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   useEffect(() => {
     const loadAppointmentInstances = async () => {
       try {
+        console.log('Loading appointment instances...')
         const instances = await awsAppointmentService.getAllInstancesForTenant()
+        console.log('Loaded appointment instances:', instances)
         setAppointmentInstances(instances)
         
         // Update appointment requests set based on existing instances
-        const existingActivityIds = instances.map(instance => instance.fsmActivity.activityId)
+        // Handle both 'activityId' and 'id' fields in fsmActivity
+        const existingActivityIds = instances.map(instance => {
+          const activityId = instance.fsmActivity.activityId || instance.fsmActivity.id
+          console.log('Instance activity ID:', activityId, 'from fsmActivity:', instance.fsmActivity)
+          return activityId
+        }).filter(Boolean) // Remove any undefined values
+        console.log('Existing activity IDs with appointments:', existingActivityIds)
         setAppointmentRequests(new Set(existingActivityIds))
       } catch (error) {
         console.error('Error loading appointment instances:', error)
