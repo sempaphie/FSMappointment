@@ -151,9 +151,11 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     console.log('Opening instance for activity:', activity)
     
     // Find the appointment instance for this activity
-    const instance = appointmentInstances.find(inst => 
-      inst.fsmActivity.activityId === activityId
-    )
+    // Handle both 'activityId' and 'id' fields in fsmActivity
+    const instance = appointmentInstances.find(inst => {
+      const instActivityId = inst.fsmActivity.activityId || inst.fsmActivity.id
+      return instActivityId === activityId
+    })
     
     if (instance) {
       // Open customer URL in new tab
