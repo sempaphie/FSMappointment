@@ -692,7 +692,7 @@ async function updateCustomerBooking(customerAccessToken, bookingData) {
             }
         };
         
-        const scanResult = await dynamodb.scan(scanParams).promise();
+        const scanResult = await dynamodb.send(new ScanCommand(scanParams));
         
         if (!scanResult.Items || scanResult.Items.length === 0) {
             throw new Error('Appointment instance not found');
@@ -733,7 +733,7 @@ async function updateCustomerBooking(customerAccessToken, bookingData) {
             }
         };
         
-        await dynamodb.update(updateParams).promise();
+        await dynamodb.send(new UpdateCommand(updateParams));
         
         return {
             statusCode: 200,
