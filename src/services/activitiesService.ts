@@ -98,7 +98,7 @@ const MOCK_ACTIVITIES: FSMActivity[] = [
     },
     responsibles: ['6BE3F76238CA41BBB5B2A622548408E8'],
     type: 'ASSIGNMENT',
-    executionStage: 'EXECUTION',
+    executionStage: 'DISPATCHING',
     priority: 'Medium',
     activityId: '01E12B09F87F4B458BAE623CBE6855AA',
     serviceCallId: '7066C23BFE0B467A94E193C487412623',
@@ -119,7 +119,7 @@ const MOCK_ACTIVITIES: FSMActivity[] = [
     },
     responsibles: ['DB6E3F59D0D742B4B358906FD376AE4B'],
     type: 'ASSIGNMENT',
-    executionStage: 'EXECUTION',
+    executionStage: 'DISPATCHING',
     priority: 'High',
     activityId: '05AF36ACF64948E1967EA9EFDA7372FD',
     serviceCallId: '7066C23BFE0B467A94E193C487412623',
@@ -161,7 +161,7 @@ const MOCK_ACTIVITIES: FSMActivity[] = [
     },
     responsibles: ['6BE3F76238CA41BBB5B2A622548408E8'],
     type: 'ASSIGNMENT',
-    executionStage: 'EXECUTION',
+    executionStage: 'DISPATCHING',
     priority: 'Low',
     activityId: '0AB78531468F42B08E2F90168AF982F3',
     serviceCallId: '7066C23BFE0B467A94E193C487412623',
@@ -188,8 +188,100 @@ const MOCK_ACTIVITIES: FSMActivity[] = [
     serviceCallId: '7066C23BFE0B467A94E193C487412623',
     createdOn: '2025-06-23T19:08:35Z',
     lastModifiedOn: '2025-06-23T19:08:35Z'
+  },
+  // Additional activities to demonstrate filtering
+  {
+    id: '12D86A8536034AD79AC3448B5F1F58E1',
+    code: '56',
+    subject: 'Leckwarngert Installation',
+    status: 'OPEN',
+    startDateTime: '2025-06-28T08:00:00Z',
+    endDateTime: '2025-06-28T12:00:00Z',
+    businessPartner: '2E524349FF1048338EBC1D7F01F22ED1',
+    object: {
+      objectId: '6E91350F81724A91A6B3D6D007C33345',
+      objectType: 'SERVICECALL'
+    },
+    responsibles: ['DB6E3F59D0D742B4B358906FD376AE4B'],
+    type: 'ASSIGNMENT',
+    executionStage: 'DISPATCHING',
+    priority: 'High',
+    activityId: '12D86A8536034AD79AC3448B5F1F58E1',
+    serviceCallId: '6E91350F81724A91A6B3D6D007C33345',
+    createdOn: '2025-06-23T19:08:35Z',
+    lastModifiedOn: '2025-06-23T19:08:35Z'
+  },
+  {
+    id: 'CLOSED_ACTIVITY_EXAMPLE',
+    code: '99',
+    subject: 'Closed Activity Example',
+    status: 'CLOSED',
+    startDateTime: '2025-06-20T08:00:00Z',
+    endDateTime: '2025-06-20T12:00:00Z',
+    businessPartner: '91C30CA6379B4F468B90D7DA90876311',
+    object: {
+      objectId: '7066C23BFE0B467A94E193C487412623',
+      objectType: 'SERVICECALL'
+    },
+    responsibles: ['6BE3F76238CA41BBB5B2A622548408E8'],
+    type: 'ASSIGNMENT',
+    executionStage: 'DISPATCHING',
+    priority: 'Medium',
+    activityId: 'CLOSED_ACTIVITY_EXAMPLE',
+    serviceCallId: '7066C23BFE0B467A94E193C487412623',
+    createdOn: '2025-06-20T08:00:00Z',
+    lastModifiedOn: '2025-06-20T12:00:00Z'
+  },
+  {
+    id: 'NON_ASSIGNMENT_EXAMPLE',
+    code: '88',
+    subject: 'Non-Assignment Activity',
+    status: 'OPEN',
+    startDateTime: '2025-06-29T08:00:00Z',
+    endDateTime: '2025-06-29T12:00:00Z',
+    businessPartner: '91C30CA6379B4F468B90D7DA90876311',
+    object: {
+      objectId: '7066C23BFE0B467A94E193C487412623',
+      objectType: 'SERVICECALL'
+    },
+    responsibles: ['6BE3F76238CA41BBB5B2A622548408E8'],
+    type: 'MAINTENANCE',
+    executionStage: 'DISPATCHING',
+    priority: 'Low',
+    activityId: 'NON_ASSIGNMENT_EXAMPLE',
+    serviceCallId: '7066C23BFE0B467A94E193C487412623',
+    createdOn: '2025-06-29T08:00:00Z',
+    lastModifiedOn: '2025-06-29T08:00:00Z'
   }
 ]
+
+// Filter function to only include activities that can have appointment instances created
+function filterEligibleActivities(activities: FSMActivity[]): FSMActivity[] {
+  console.log(`Filtering ${activities.length} activities for appointment eligibility`)
+  
+  const filtered = activities.filter(activity => {
+    // Check if activity meets all criteria for appointment instance creation
+    const isNotClosed = activity.status !== 'CLOSED'
+    const isDispatching = activity.executionStage === 'DISPATCHING'
+    const isAssignment = activity.type === 'ASSIGNMENT'
+    
+    const isEligible = isNotClosed && isDispatching && isAssignment
+    
+    if (!isEligible) {
+      console.log(`Activity ${activity.id} filtered out:`, {
+        status: activity.status,
+        executionStage: activity.executionStage,
+        type: activity.type,
+        subject: activity.subject
+      })
+    }
+    
+    return isEligible
+  })
+  
+  console.log(`${filtered.length} activities remain after filtering`)
+  return filtered
+}
 
 export const activitiesService = {
   async getActivities(bearerToken: string): Promise<{ success: boolean; activities?: FSMActivity[]; error?: string; details?: any }> {
@@ -213,13 +305,15 @@ export const activitiesService = {
     
     if (MOCK_MODE) {
       console.log('Running in MOCK mode - using sample activities data')
+      const filteredActivities = filterEligibleActivities(MOCK_ACTIVITIES)
       return {
         success: true,
-        activities: MOCK_ACTIVITIES,
+        activities: filteredActivities,
         details: {
           mockMode: true,
-          totalCount: MOCK_ACTIVITIES.length,
-          message: 'Using mock activities for UI development'
+          totalCount: filteredActivities.length,
+          originalCount: MOCK_ACTIVITIES.length,
+          message: 'Using filtered mock activities for UI development'
         }
       }
     }
@@ -278,9 +372,16 @@ export const activitiesService = {
       }
 
       if (activities.length > 0 || Array.isArray(activities)) {
+        // Filter activities to only include those eligible for appointment instance creation
+        const filteredActivities = filterEligibleActivities(activities)
         return {
           success: true,
-          activities: activities,
+          activities: filteredActivities,
+          details: {
+            originalCount: activities.length,
+            filteredCount: filteredActivities.length,
+            message: 'Activities filtered for appointment eligibility'
+          }
         }
       } else {
         return {
