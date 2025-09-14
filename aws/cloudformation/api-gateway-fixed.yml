@@ -261,6 +261,7 @@ Resources:
       - TenantIdPutMethod
       - TenantIdOptionsMethod
       - AppointmentPostMethod
+      - AppointmentGetMethod
       - AppointmentOptionsMethod
       - AppointmentTokenGetMethod
       - AppointmentTokenPutMethod
@@ -288,6 +289,25 @@ Resources:
       RestApiId: !Ref TenantApiGateway
       ResourceId: !Ref AppointmentResource
       HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TenantApiFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # GET method for /appointments (get all appointments for tenant)
+  AppointmentGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref TenantApiGateway
+      ResourceId: !Ref AppointmentResource
+      HttpMethod: GET
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
