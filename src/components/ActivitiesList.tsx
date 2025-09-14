@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { activitiesService, awsAppointmentService, type FSMActivity } from '../services'
-import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink, X } from 'lucide-react'
+import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, X } from 'lucide-react'
 import type { AppointmentInstance } from '../types'
 import { format } from 'date-fns'
 
@@ -16,8 +16,8 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   const [appointmentLoading, setAppointmentLoading] = useState(false)
   const [appointmentRequests, setAppointmentRequests] = useState<Set<string>>(new Set())
   const [appointmentInstances, setAppointmentInstances] = useState<AppointmentInstance[]>([])
-  const [selectedInstance, setSelectedInstance] = useState<AppointmentInstance | null>(null)
-  const [showInstanceModal, setShowInstanceModal] = useState(false)
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
+  const [tooltipInstance, setTooltipInstance] = useState<AppointmentInstance | null>(null)
 
   const handleGetActivities = async (existingActivityIds: string[] = []) => {
     setLoading(true)
@@ -179,7 +179,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     }
   }
 
-  const handleShowInstanceInfo = (activity: FSMActivity) => {
+  const handleShowInstanceInfo = (activity: FSMActivity, event: React.MouseEvent) => {
     console.log('handleShowInstanceInfo called for activity:', activity)
     const activityId = activity.id || `activity-${activities.indexOf(activity)}`
     console.log('Looking for activityId:', activityId)
@@ -195,13 +195,23 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     console.log('Found instance:', instance)
 
     if (instance) {
-      console.log('Setting selectedInstance and showing modal')
-      setSelectedInstance(instance)
-      setShowInstanceModal(true)
+      // Get button position for tooltip placement
+      const buttonRect = event.currentTarget.getBoundingClientRect()
+      setTooltipPosition({
+        x: buttonRect.right + 10, // Position to the right of the button
+        y: buttonRect.top
+      })
+      setTooltipInstance(instance)
+      console.log('Setting tooltip position and instance')
     } else {
       console.log('No instance found for activity:', activityId)
       console.log('Available instances:', appointmentInstances.map(inst => inst.fsmActivity.activityId || inst.fsmActivity.id))
     }
+  }
+
+  const handleHideTooltip = () => {
+    setTooltipPosition(null)
+    setTooltipInstance(null)
   }
 
   const getAppointmentStatusButton = (activity: FSMActivity) => {
@@ -423,9 +433,9 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                       )}
                       <td>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
                             console.log('Info button clicked for activity:', activity)
-                            handleShowInstanceInfo(activity)
+                            handleShowInstanceInfo(activity, e)
                           }}
                           className="p-1 hover:bg-gray-100 rounded"
                           title="View appointment details"
@@ -583,207 +593,112 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
         </div>
       </div>
 
-      {/* Appointment Instance Modal */}
-      {showInstanceModal && selectedInstance && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                  Appointment Instance Details
-                </h2>
-                <button
-                  onClick={() => setShowInstanceModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+      {/* Appointment Instance Tooltip */}
+      {tooltipPosition && tooltipInstance && (
+        <div
+          data-tooltip
+          className="fixed z-50 rounded-lg shadow-lg border border-gray-300 p-4 max-w-sm"
+          style={{
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y}px`,
+            backgroundColor: 'white',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }}
+          onMouseLeave={handleHideTooltip}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-gray-900 text-sm">
+              {tooltipInstance.fsmActivity.id || tooltipInstance.fsmActivity.activityId || 'Activity'}
+            </h3>
+            <button
+              onClick={handleHideTooltip}
+              className="text-gray-400 hover:text-gray-600 ml-2 p-1"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-2 text-xs">
+            {/* Subject */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 font-medium">Subject:</span>
+              <span className="text-gray-900">{tooltipInstance.fsmActivity.subject || 'N/A'}</span>
+            </div>
+
+            {/* Status */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 font-medium">Status:</span>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                tooltipInstance.status === 'PENDING' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : tooltipInstance.status === 'SUBMITTED'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {tooltipInstance.status}
+              </span>
+            </div>
+
+            {/* Business Partner */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 font-medium">Business Partner:</span>
+              <span className="text-gray-900">{tooltipInstance.fsmActivity.businessPartner || 'N/A'}</span>
+            </div>
+
+            {/* Equipment */}
+            {tooltipInstance.fsmActivity.equipment && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600 font-medium">Equipment:</span>
+                  <span className="text-gray-900">{tooltipInstance.fsmActivity.equipment.name || 'N/A'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600 font-medium">Code:</span>
+                  <span className="text-blue-600 underline">{tooltipInstance.fsmActivity.equipment.code || 'N/A'}</span>
+                </div>
               </div>
+            )}
 
-              {/* Content */}
-              <div className="space-y-4">
-                {/* Activity Information */}
-                <div className="sap-card">
-                  <div className="sap-card-header">
-                    <h3 className="sap-card-title">Activity Information</h3>
-                  </div>
-                  <div className="sap-card-content">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Activity ID</p>
-                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                          {selectedInstance.fsmActivity.id || selectedInstance.fsmActivity.activityId || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Subject</p>
-                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                          {selectedInstance.fsmActivity.subject || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Status</p>
-                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                          {selectedInstance.status}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Business Partner</p>
-                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                          {selectedInstance.fsmActivity.businessPartner || 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+            {/* Valid Until */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600 font-medium">Valid Until:</span>
+              <span className="text-gray-900">{format(new Date(tooltipInstance.validUntil), 'dd.MM.yyyy HH:mm')}</span>
+            </div>
+
+            {/* Customer Booking Info */}
+            {tooltipInstance.customerBooking && (
+              <div className="space-y-1 pt-2 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600 font-medium">Customer:</span>
+                  <span className="text-gray-900">{tooltipInstance.customerBooking.customerName}</span>
                 </div>
-
-                {/* Equipment Information */}
-                {selectedInstance.fsmActivity.equipment && (
-                  <div className="sap-card">
-                    <div className="sap-card-header">
-                      <h3 className="sap-card-title">Equipment Information</h3>
-                    </div>
-                    <div className="sap-card-content">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Equipment Code</p>
-                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                            {selectedInstance.fsmActivity.equipment.code || 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Equipment Name</p>
-                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                            {selectedInstance.fsmActivity.equipment.name || 'N/A'}
-                          </p>
-                        </div>
-                        <div className="md:col-span-2">
-                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Address</p>
-                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                            {selectedInstance.fsmActivity.equipment.address || 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Appointment Details */}
-                <div className="sap-card">
-                  <div className="sap-card-header">
-                    <h3 className="sap-card-title">Appointment Details</h3>
-                  </div>
-                  <div className="sap-card-content">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Valid From</p>
-                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                          {format(new Date(selectedInstance.validFrom), 'MMM dd, yyyy HH:mm')}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Valid Until</p>
-                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                          {format(new Date(selectedInstance.validUntil), 'MMM dd, yyyy HH:mm')}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Created</p>
-                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                          {format(new Date(selectedInstance.createdAt), 'MMM dd, yyyy HH:mm')}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Last Updated</p>
-                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                          {format(new Date(selectedInstance.updatedAt), 'MMM dd, yyyy HH:mm')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Customer Booking Information */}
-                {selectedInstance.customerBooking && (
-                  <div className="sap-card">
-                    <div className="sap-card-header">
-                      <h3 className="sap-card-title">Customer Booking</h3>
-                    </div>
-                    <div className="sap-card-content">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Customer Name</p>
-                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                            {selectedInstance.customerBooking.customerName}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Customer Email</p>
-                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                            {selectedInstance.customerBooking.customerEmail}
-                          </p>
-                        </div>
-                        {selectedInstance.customerBooking.customerPhone && (
-                          <div>
-                            <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Customer Phone</p>
-                            <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                              {selectedInstance.customerBooking.customerPhone}
-                            </p>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Booking Status</p>
-                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                            {selectedInstance.customerBooking.status}
-                          </p>
-                        </div>
-                        {selectedInstance.customerBooking.requestedDateTime && (
-                          <div>
-                            <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Requested Date</p>
-                            <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                              {format(new Date(selectedInstance.customerBooking.requestedDateTime), 'MMM dd, yyyy HH:mm')}
-                            </p>
-                          </div>
-                        )}
-                        {selectedInstance.customerBooking.customerMessage && (
-                          <div className="md:col-span-2">
-                            <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Customer Message</p>
-                            <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                              {selectedInstance.customerBooking.customerMessage}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                {tooltipInstance.customerBooking.requestedDateTime && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600 font-medium">Requested:</span>
+                    <span className="text-gray-900">{format(new Date(tooltipInstance.customerBooking.requestedDateTime), 'dd.MM.yyyy HH:mm')}</span>
                   </div>
                 )}
               </div>
+            )}
 
-              {/* Footer */}
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-                <button
-                  onClick={() => setShowInstanceModal(false)}
-                  className="sap-button"
-                  style={{ background: '#6c757d', color: 'white' }}
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    const activity = activities.find(a => 
-                      (a.id || `activity-${activities.indexOf(a)}`) === (selectedInstance.fsmActivity.id || selectedInstance.fsmActivity.activityId)
-                    )
-                    if (activity) {
-                      handleOpenInstance(activity)
-                    }
-                  }}
-                  className="sap-button"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Open Customer Page
-                </button>
-              </div>
+            {/* Action Button */}
+            <div className="pt-2 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  const activity = activities.find(a => 
+                    (a.id || `activity-${activities.indexOf(a)}`) === (tooltipInstance.fsmActivity.id || tooltipInstance.fsmActivity.activityId)
+                  )
+                  if (activity) {
+                    handleOpenInstance(activity)
+                    handleHideTooltip()
+                  }
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-1.5 px-3 rounded font-medium transition-colors"
+              >
+                Open Customer Page
+              </button>
             </div>
           </div>
         </div>
