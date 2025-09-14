@@ -398,16 +398,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                     <tr key={activityId} className={isSelected ? 'selected' : ''}>
                       {showStatusButton && (
                         <td>
-                          <div className="flex items-center gap-2">
-                            {getAppointmentStatusButton(activity)}
-                            <button
-                              onClick={() => handleShowInstanceInfo(activity)}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="View appointment details"
-                            >
-                              <Info className="w-4 h-4 text-gray-600" />
-                            </button>
-                          </div>
+                          {getAppointmentStatusButton(activity)}
                         </td>
                       )}
                       {hasSelection && (
@@ -421,7 +412,13 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                         </td>
                       )}
                       <td>
-                        <Info className="sap-icon" />
+                        <button
+                          onClick={() => handleShowInstanceInfo(activity)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="View appointment details"
+                        >
+                          <Info className="sap-icon" />
+                        </button>
                       </td>
                       <td>
                         <span className="sap-link">
