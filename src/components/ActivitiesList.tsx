@@ -153,20 +153,28 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   const handleOpenInstance = (activity: FSMActivity) => {
     const activityId = activity.id || `activity-${activities.indexOf(activity)}`
     console.log('Opening instance for activity:', activity)
+    console.log('Activity ID:', activityId)
+    console.log('Available appointment instances:', appointmentInstances.length)
     
     // Find the appointment instance for this activity
     // Handle both 'activityId' and 'id' fields in fsmActivity
     const instance = appointmentInstances.find(inst => {
       const instActivityId = inst.fsmActivity.activityId || inst.fsmActivity.id
+      console.log('Comparing:', instActivityId, '===', activityId, '=', instActivityId === activityId)
       return instActivityId === activityId
     })
     
+    console.log('Found instance:', instance)
+    
     if (instance) {
+      console.log('Customer URL:', instance.customerUrl)
       // Open customer URL in new tab
       window.open(instance.customerUrl, '_blank')
       console.log('Opened customer URL:', instance.customerUrl)
     } else {
-      alert(`No appointment instance found for activity: ${activity.code || activityId}`)
+      console.error('No appointment instance found for activity:', activityId)
+      console.log('Available instances activity IDs:', appointmentInstances.map(inst => inst.fsmActivity.activityId || inst.fsmActivity.id))
+      alert(`No appointment instance found for activity: ${activityId}`)
     }
   }
 
@@ -187,8 +195,8 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   }
 
 
-  const getServiceCallCode = (activity: FSMActivity) => {
-    return activity.object?.objectId?.slice(-7) || activity.id?.slice(-7) || 'N/A'
+  const getActivityId = (activity: FSMActivity) => {
+    return activity.id || 'N/A'
   }
 
   const getServiceCallSubject = (activity: FSMActivity) => {
@@ -272,7 +280,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                   <th className="w-12">
                     {/* Info column */}
                   </th>
-                  <th>Service Call Code</th>
+                  <th>Activity ID</th>
                   <th>Service Call Subject</th>
                   <th>Priority</th>
                   <th>Start</th>
@@ -313,7 +321,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                       </td>
                       <td>
                         <span className="sap-link">
-                          {getServiceCallCode(activity)}
+                          {getActivityId(activity)}
                         </span>
                       </td>
                       <td style={{ color: 'var(--sap-text-color)' }}>
