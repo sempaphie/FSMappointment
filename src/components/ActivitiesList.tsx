@@ -168,9 +168,22 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     
     if (instance) {
       console.log('Customer URL:', instance.customerUrl)
-      // Open customer URL in new tab
-      window.open(instance.customerUrl, '_blank')
-      console.log('Opened customer URL:', instance.customerUrl)
+      
+      // If customerUrl is null or empty, construct it from the customerAccessToken
+      let urlToOpen = instance.customerUrl
+      if (!urlToOpen && instance.customerAccessToken) {
+        urlToOpen = `https://main.d354vm8a3zuelv.amplifyapp.com/booking/${instance.customerAccessToken}`
+        console.log('Constructed customer URL:', urlToOpen)
+      }
+      
+      if (urlToOpen) {
+        // Open customer URL in new tab
+        window.open(urlToOpen, '_blank')
+        console.log('Opened customer URL:', urlToOpen)
+      } else {
+        console.error('No customer URL available for instance:', instance)
+        alert('No customer URL available for this appointment instance')
+      }
     } else {
       console.error('No appointment instance found for activity:', activityId)
       console.log('Available instances activity IDs:', appointmentInstances.map(inst => inst.fsmActivity.activityId || inst.fsmActivity.id))
