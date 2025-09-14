@@ -53,7 +53,12 @@ exports.handler = async (event) => {
                 if (operation === 'tenant') {
                     return await createTenant(JSON.parse(body || '{}'));
                 } else if (operation === 'appointments') {
-                    return await handleAppointmentPost(JSON.parse(body || '{}'));
+                    const requestData = JSON.parse(body || '{}');
+                    // Add tenantId from query parameters to the request data
+                    if (queryStringParameters?.tenantId) {
+                        requestData.tenantId = queryStringParameters.tenantId;
+                    }
+                    return await handleAppointmentPost(requestData);
                 }
                 break;
                 
@@ -533,7 +538,7 @@ async function getAppointmentInstanceByToken(customerAccessToken) {
         
         // Scan the table to find the item with matching customerAccessToken
         const params = {
-            TableName: APPOINTMENT_TENANT_TABLE_NAME,
+            TableName: APPOINTMENT_TABLE_NAME,
             FilterExpression: 'customerAccessToken = :token',
             ExpressionAttributeValues: {
                 ':token': customerAccessToken
@@ -576,7 +581,7 @@ async function getAllAppointmentInstancesForTenant(tenantId) {
         console.log('Getting all appointment instances for tenant:', tenantId);
         
         const params = {
-            TableName: APPOINTMENT_TENANT_TABLE_NAME,
+            TableName: APPOINTMENT_TABLE_NAME,
             FilterExpression: 'tenantId = :tenantId',
             ExpressionAttributeValues: {
                 ':tenantId': tenantId
@@ -648,7 +653,7 @@ async function createAppointmentInstances(request) {
             
             // Save to DynamoDB
             const params = {
-                TableName: APPOINTMENT_TENANT_TABLE_NAME,
+                TableName: APPOINTMENT_TABLE_NAME,
                 Item: instance
             };
             
@@ -680,7 +685,7 @@ async function updateCustomerBooking(customerAccessToken, bookingData) {
         
         // First, find the existing appointment instance by scanning for customerAccessToken
         const scanParams = {
-            TableName: APPOINTMENT_TENANT_TABLE_NAME,
+            TableName: APPOINTMENT_TABLE_NAME,
             FilterExpression: 'customerAccessToken = :token',
             ExpressionAttributeValues: {
                 ':token': customerAccessToken
@@ -706,7 +711,7 @@ async function updateCustomerBooking(customerAccessToken, bookingData) {
         
         // Update the appointment instance using the correct primary key
         const updateParams = {
-            TableName: APPOINTMENT_TENANT_TABLE_NAME,
+            TableName: APPOINTMENT_TABLE_NAME,
             Key: {
                 tenantId: instance.tenantId,
                 instanceId: instance.instanceId
