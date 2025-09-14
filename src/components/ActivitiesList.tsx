@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { activitiesService, awsAppointmentService, type FSMActivity } from '../services'
-import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink } from 'lucide-react'
+import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus } from 'lucide-react'
 import type { AppointmentInstance } from '../types'
 import { format } from 'date-fns'
 
@@ -150,44 +150,74 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     }
   }
 
-  const handleOpenInstance = (activity: FSMActivity) => {
+  const getAppointmentStatusButton = (activity: FSMActivity) => {
     const activityId = activity.id || `activity-${activities.indexOf(activity)}`
-    console.log('Opening instance for activity:', activity)
-    console.log('Activity ID:', activityId)
-    console.log('Available appointment instances:', appointmentInstances.length)
     
     // Find the appointment instance for this activity
-    // Handle both 'activityId' and 'id' fields in fsmActivity
     const instance = appointmentInstances.find(inst => {
       const instActivityId = inst.fsmActivity.activityId || inst.fsmActivity.id
-      console.log('Comparing:', instActivityId, '===', activityId, '=', instActivityId === activityId)
       return instActivityId === activityId
     })
+
+    if (!instance) {
+      return null
+    }
+
+    // Calculate days remaining
+    const now = new Date()
+    const validUntil = new Date(instance.validUntil)
+    const daysRemaining = Math.ceil((validUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     
-    console.log('Found instance:', instance)
-    
-    if (instance) {
-      console.log('Customer URL:', instance.customerUrl)
-      
-      // If customerUrl is null or empty, construct it from the customerAccessToken
-      let urlToOpen = instance.customerUrl
-      if (!urlToOpen && instance.customerAccessToken) {
-        urlToOpen = `https://main.d354vm8a3zuelv.amplifyapp.com/booking/${instance.customerAccessToken}`
-        console.log('Constructed customer URL:', urlToOpen)
+    // Determine status and styling
+    if (instance.status === 'PENDING') {
+      const buttonStyle = {
+        background: '#0070f3',
+        color: 'white',
+        border: 'none',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '500'
       }
       
-      if (urlToOpen) {
-        // Open customer URL in new tab
-        window.open(urlToOpen, '_blank')
-        console.log('Opened customer URL:', urlToOpen)
-      } else {
-        console.error('No customer URL available for instance:', instance)
-        alert('No customer URL available for this appointment instance')
+      return (
+        <button style={buttonStyle}>
+          Pending {daysRemaining} days
+        </button>
+      )
+    } else if (instance.status === 'SUBMITTED') {
+      const buttonStyle = {
+        background: '#00a650',
+        color: 'white',
+        border: 'none',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '500'
       }
+      
+      return (
+        <button style={buttonStyle}>
+          Submitted
+        </button>
+      )
     } else {
-      console.error('No appointment instance found for activity:', activityId)
-      console.log('Available instances activity IDs:', appointmentInstances.map(inst => inst.fsmActivity.activityId || inst.fsmActivity.id))
-      alert(`No appointment instance found for activity: ${activityId}`)
+      // Other statuses (APPROVED, REJECTED, etc.)
+      const buttonStyle = {
+        background: '#6c757d',
+        color: 'white',
+        border: 'none',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '500'
+      }
+      
+      return (
+        <button style={buttonStyle}>
+          {instance.status}
+        </button>
+      )
     }
   }
 
@@ -255,7 +285,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     selectionState?: Set<string>,
     onSelectionChange?: (activityId: string, checked: boolean) => void,
     onSelectAll?: (checked: boolean) => void,
-    showOpenButton: boolean = false
+    showStatusButton: boolean = false
   ) => {
     const hasSelection = showSelection && selectionState && onSelectionChange && onSelectAll
 
@@ -275,9 +305,9 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
             <table className="w-full">
               <thead>
                 <tr>
-                  {showOpenButton && (
-                    <th className="w-20">
-                      {/* Open Instance column */}
+                  {showStatusButton && (
+                    <th className="w-32">
+                      Status
                     </th>
                   )}
                   {hasSelection && (
@@ -307,16 +337,9 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                   
                   return (
                     <tr key={activityId} className={isSelected ? 'selected' : ''}>
-                      {showOpenButton && (
+                      {showStatusButton && (
                         <td>
-                          <button
-                            onClick={() => handleOpenInstance(activity)}
-                            className="sap-button"
-                            style={{ padding: '4px 8px', fontSize: '12px' }}
-                          >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Open
-                          </button>
+                          {getAppointmentStatusButton(activity)}
                         </td>
                       )}
                       {hasSelection && (
@@ -383,7 +406,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
               undefined,
               undefined,
               undefined,
-              true // showOpenButton
+              true // showStatusButton
             )}
           </div>
         </div>
