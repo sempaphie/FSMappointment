@@ -60,7 +60,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
           const activityId = instance.fsmActivity.activityId || instance.fsmActivity.id
           console.log('Instance activity ID:', activityId, 'from fsmActivity:', instance.fsmActivity)
           return activityId
-        }).filter(Boolean) // Remove any undefined values
+        }).filter((id): id is string => Boolean(id)) // Remove any undefined values and ensure string type
         console.log('Existing activity IDs with appointments:', existingActivityIds)
         setAppointmentRequests(new Set(existingActivityIds))
       } catch (error) {

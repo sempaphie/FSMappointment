@@ -265,7 +265,7 @@ export const InstancesList: React.FC<InstancesListProps> = () => {
                 <div>
                   <p className="text-sm" style={{ color: 'var(--sap-text-color-secondary)' }}>Pending</p>
                   <p className="text-xl font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                    {instances.filter(i => i.status === 'pending').length}
+                    {instances.filter(i => i.status === 'PENDING').length}
                   </p>
                 </div>
               </div>
@@ -281,7 +281,7 @@ export const InstancesList: React.FC<InstancesListProps> = () => {
                 <div>
                   <p className="text-sm" style={{ color: 'var(--sap-text-color-secondary)' }}>Approved</p>
                   <p className="text-xl font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                    {instances.filter(i => i.status === 'confirmed').length}
+                    {instances.filter(i => i.status === 'CONFIRMED').length}
                   </p>
                 </div>
               </div>
@@ -297,7 +297,7 @@ export const InstancesList: React.FC<InstancesListProps> = () => {
                 <div>
                   <p className="text-sm" style={{ color: 'var(--sap-text-color-secondary)' }}>Rejected</p>
                   <p className="text-xl font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                    {instances.filter(i => i.status === 'rejected').length}
+                    {instances.filter(i => i.status === 'REJECTED').length}
                   </p>
                 </div>
               </div>
@@ -313,7 +313,7 @@ export const InstancesList: React.FC<InstancesListProps> = () => {
                 <div>
                   <p className="text-sm" style={{ color: 'var(--sap-text-color-secondary)' }}>Expired</p>
                   <p className="text-xl font-semibold" style={{ color: 'var(--sap-text-color)' }}>
-                    {instances.filter(i => i.status === 'expired').length}
+                    {instances.filter(i => i.status === 'EXPIRED').length}
                   </p>
                 </div>
               </div>

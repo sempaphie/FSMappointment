@@ -134,7 +134,7 @@ export const cloudAppointmentService = {
           validFrom: now,
           validUntil,
           ttl: calculateTTL(),
-          status: 'pending',
+          status: 'PENDING',
           createdAt: now,
           updatedAt: now,
           fsmActivity: {
@@ -251,7 +251,7 @@ export const cloudAppointmentService = {
       const updatedInstance: AppointmentInstance = {
         ...instance,
         customerBooking,
-        status: 'scheduled',
+        status: 'SCHEDULED',
         updatedAt: now
       }
       
@@ -292,7 +292,7 @@ export const cloudAppointmentService = {
       const updatedInstance: AppointmentInstance = {
         ...instance,
         fsmResponse: response,
-        status: response.response === 'approve' ? 'confirmed' : 'rejected',
+        status: response.response === 'approve' ? 'CONFIRMED' : 'REJECTED',
         updatedAt: now
       }
       
