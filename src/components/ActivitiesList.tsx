@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { activitiesService, awsAppointmentService, type FSMActivity } from '../services'
-import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus } from 'lucide-react'
+import { AlertCircle, Loader2, RefreshCw, Settings, Info, Plus, ExternalLink, X } from 'lucide-react'
 import type { AppointmentInstance } from '../types'
 import { format } from 'date-fns'
 
@@ -16,6 +16,8 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
   const [appointmentLoading, setAppointmentLoading] = useState(false)
   const [appointmentRequests, setAppointmentRequests] = useState<Set<string>>(new Set())
   const [appointmentInstances, setAppointmentInstances] = useState<AppointmentInstance[]>([])
+  const [selectedInstance, setSelectedInstance] = useState<AppointmentInstance | null>(null)
+  const [showInstanceModal, setShowInstanceModal] = useState(false)
 
   const handleGetActivities = async (existingActivityIds: string[] = []) => {
     setLoading(true)
@@ -150,6 +152,48 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
     }
   }
 
+  const handleOpenInstance = (activity: FSMActivity) => {
+    const activityId = activity.id || `activity-${activities.indexOf(activity)}`
+    
+    // Find the appointment instance for this activity
+    const instance = appointmentInstances.find(inst => {
+      const instActivityId = inst.fsmActivity.activityId || inst.fsmActivity.id
+      return instActivityId === activityId
+    })
+
+    if (instance) {
+      // If customerUrl is null or empty, construct it from the customerAccessToken
+      let urlToOpen = instance.customerUrl
+      if (!urlToOpen && instance.customerAccessToken) {
+        urlToOpen = `https://main.d354vm8a3zuelv.amplifyapp.com/booking/${instance.customerAccessToken}`
+      }
+
+      if (urlToOpen) {
+        // Open customer URL in new tab
+        window.open(urlToOpen, '_blank')
+      } else {
+        alert('No customer URL available for this appointment instance')
+      }
+    } else {
+      alert(`No appointment instance found for activity: ${activityId}`)
+    }
+  }
+
+  const handleShowInstanceInfo = (activity: FSMActivity) => {
+    const activityId = activity.id || `activity-${activities.indexOf(activity)}`
+    
+    // Find the appointment instance for this activity
+    const instance = appointmentInstances.find(inst => {
+      const instActivityId = inst.fsmActivity.activityId || inst.fsmActivity.id
+      return instActivityId === activityId
+    })
+
+    if (instance) {
+      setSelectedInstance(instance)
+      setShowInstanceModal(true)
+    }
+  }
+
   const getAppointmentStatusButton = (activity: FSMActivity) => {
     const activityId = activity.id || `activity-${activities.indexOf(activity)}`
     
@@ -177,11 +221,16 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
         padding: '4px 8px',
         borderRadius: '4px',
         fontSize: '12px',
-        fontWeight: '500'
+        fontWeight: '500',
+        cursor: 'pointer'
       }
       
       return (
-        <button style={buttonStyle}>
+        <button 
+          style={buttonStyle}
+          onClick={() => handleOpenInstance(activity)}
+          title="Click to open customer booking page"
+        >
           Pending {daysRemaining} days
         </button>
       )
@@ -193,11 +242,16 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
         padding: '4px 8px',
         borderRadius: '4px',
         fontSize: '12px',
-        fontWeight: '500'
+        fontWeight: '500',
+        cursor: 'pointer'
       }
       
       return (
-        <button style={buttonStyle}>
+        <button 
+          style={buttonStyle}
+          onClick={() => handleOpenInstance(activity)}
+          title="Click to open customer booking page"
+        >
           Submitted
         </button>
       )
@@ -210,11 +264,16 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
         padding: '4px 8px',
         borderRadius: '4px',
         fontSize: '12px',
-        fontWeight: '500'
+        fontWeight: '500',
+        cursor: 'pointer'
       }
       
       return (
-        <button style={buttonStyle}>
+        <button 
+          style={buttonStyle}
+          onClick={() => handleOpenInstance(activity)}
+          title="Click to open customer booking page"
+        >
           {instance.status}
         </button>
       )
@@ -306,7 +365,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
               <thead>
                 <tr>
                   {showStatusButton && (
-                    <th className="w-32">
+                    <th className="w-40">
                       Status
                     </th>
                   )}
@@ -339,7 +398,16 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
                     <tr key={activityId} className={isSelected ? 'selected' : ''}>
                       {showStatusButton && (
                         <td>
-                          {getAppointmentStatusButton(activity)}
+                          <div className="flex items-center gap-2">
+                            {getAppointmentStatusButton(activity)}
+                            <button
+                              onClick={() => handleShowInstanceInfo(activity)}
+                              className="p-1 hover:bg-gray-100 rounded"
+                              title="View appointment details"
+                            >
+                              <Info className="w-4 h-4 text-gray-600" />
+                            </button>
+                          </div>
                         </td>
                       )}
                       {hasSelection && (
@@ -504,6 +572,212 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({ bearerToken }) =
           </div>
         </div>
       </div>
+
+      {/* Appointment Instance Modal */}
+      {showInstanceModal && selectedInstance && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                  Appointment Instance Details
+                </h2>
+                <button
+                  onClick={() => setShowInstanceModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="space-y-4">
+                {/* Activity Information */}
+                <div className="sap-card">
+                  <div className="sap-card-header">
+                    <h3 className="sap-card-title">Activity Information</h3>
+                  </div>
+                  <div className="sap-card-content">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Activity ID</p>
+                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                          {selectedInstance.fsmActivity.id || selectedInstance.fsmActivity.activityId || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Subject</p>
+                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                          {selectedInstance.fsmActivity.subject || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Status</p>
+                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                          {selectedInstance.status}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Business Partner</p>
+                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                          {selectedInstance.fsmActivity.businessPartner || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Equipment Information */}
+                {selectedInstance.fsmActivity.equipment && (
+                  <div className="sap-card">
+                    <div className="sap-card-header">
+                      <h3 className="sap-card-title">Equipment Information</h3>
+                    </div>
+                    <div className="sap-card-content">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Equipment Code</p>
+                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                            {selectedInstance.fsmActivity.equipment.code || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Equipment Name</p>
+                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                            {selectedInstance.fsmActivity.equipment.name || 'N/A'}
+                          </p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Address</p>
+                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                            {selectedInstance.fsmActivity.equipment.address || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Appointment Details */}
+                <div className="sap-card">
+                  <div className="sap-card-header">
+                    <h3 className="sap-card-title">Appointment Details</h3>
+                  </div>
+                  <div className="sap-card-content">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Valid From</p>
+                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                          {format(new Date(selectedInstance.validFrom), 'MMM dd, yyyy HH:mm')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Valid Until</p>
+                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                          {format(new Date(selectedInstance.validUntil), 'MMM dd, yyyy HH:mm')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Created</p>
+                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                          {format(new Date(selectedInstance.createdAt), 'MMM dd, yyyy HH:mm')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Last Updated</p>
+                        <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                          {format(new Date(selectedInstance.updatedAt), 'MMM dd, yyyy HH:mm')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Booking Information */}
+                {selectedInstance.customerBooking && (
+                  <div className="sap-card">
+                    <div className="sap-card-header">
+                      <h3 className="sap-card-title">Customer Booking</h3>
+                    </div>
+                    <div className="sap-card-content">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Customer Name</p>
+                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                            {selectedInstance.customerBooking.customerName}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Customer Email</p>
+                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                            {selectedInstance.customerBooking.customerEmail}
+                          </p>
+                        </div>
+                        {selectedInstance.customerBooking.customerPhone && (
+                          <div>
+                            <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Customer Phone</p>
+                            <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                              {selectedInstance.customerBooking.customerPhone}
+                            </p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Booking Status</p>
+                          <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                            {selectedInstance.customerBooking.status}
+                          </p>
+                        </div>
+                        {selectedInstance.customerBooking.requestedDateTime && (
+                          <div>
+                            <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Requested Date</p>
+                            <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                              {format(new Date(selectedInstance.customerBooking.requestedDateTime), 'MMM dd, yyyy HH:mm')}
+                            </p>
+                          </div>
+                        )}
+                        {selectedInstance.customerBooking.customerMessage && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm mb-1" style={{ color: 'var(--sap-text-color-secondary)' }}>Customer Message</p>
+                            <p className="font-semibold" style={{ color: 'var(--sap-text-color)' }}>
+                              {selectedInstance.customerBooking.customerMessage}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+                <button
+                  onClick={() => setShowInstanceModal(false)}
+                  className="sap-button"
+                  style={{ background: '#6c757d', color: 'white' }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    const activity = activities.find(a => 
+                      (a.id || `activity-${activities.indexOf(a)}`) === (selectedInstance.fsmActivity.id || selectedInstance.fsmActivity.activityId)
+                    )
+                    if (activity) {
+                      handleOpenInstance(activity)
+                    }
+                  }}
+                  className="sap-button"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open Customer Page
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
